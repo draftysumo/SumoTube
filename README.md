@@ -25,13 +25,6 @@ VideoBrowser offers a more interactive way to navigate local video collections c
 
 ## Installation
 
-### Prerequisites (Must be installed FIRST)
-- **Qt 5 or Qt 6**: The application is built using the Qt framework for the GUI and cross-platform functionality.
-- **FFmpeg**: Required for thumbnail generation and duration extraction. Install via:
-  - **Windows**: Download from [FFmpeg official site](https://ffmpeg.org/download.html) and add `ffmpeg.exe` and `ffprobe.exe` to your PATH.
-  - **macOS**: Install via Homebrew (`brew install ffmpeg`) or download from the FFmpeg site.
-  - **Linux**: Install via package manager (e.g., `sudo apt install ffmpeg` on Ubuntu/Debian or `sudo dnf install ffmpeg` on Fedora).
-
 ### Install & Run
 1. Download the latest release from [Releases](https://github.com/yourusername/VideoBrowser/releases).
 2. Ensure FFmpeg (`ffmpeg` and `ffprobe`) is installed and accessible in your system PATH.
