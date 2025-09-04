@@ -54,4 +54,4 @@ Fork, create a branch, and submit pull requests.
 
 ## License
 
-GNU 3.0 Public License. See [LICENSE](LICENSE) for details.
+GPL-3.0 GNU Public License. See [LICENSE](LICENSE) for details.
