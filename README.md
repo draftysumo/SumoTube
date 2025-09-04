@@ -1,5 +1,7 @@
 # VideoBrowser
 
+<img width="200" height="200" alt="bitmap" src="https://github.com/user-attachments/assets/94685c2c-6a2e-494f-a98f-0593f7a364e0" />
+
 VideoBrowser is a desktop application that organizes and displays your local video files in a grid layout, randomly shuffled each time you open the app. It automatically pulls video titles from filenames and creator names from parent folders, supports attaching custom thumbnails, and includes a search bar to quickly find videos or creators.
 
 ## What It Is
