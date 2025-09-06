@@ -50,17 +50,7 @@ git clone https://github.com/draftysumo/draftys-videobrowser.git
 cd video-browser
 ```
 
-2. Create a build directory and run `qmake` or `cmake`:
-
-Using **qmake**:
-
-```bash
-mkdir build && cd build
-qmake ../
-make -j$(nproc)
-```
-
-Using **CMake**:
+2. Create a build directory and run:
 
 ```bash
 mkdir build && cd build
@@ -118,15 +108,10 @@ git push origin feature/your-feature
 
 ```
 video-browser/
-├── src/
-│   ├── Main.cpp
-│   ├── VideoPlayer.h
-│   └── VideoPlayer.cpp
+├── Main.cpp
+├── VideoPlayer.h
+├── VideoPlayer.cpp
 ├── README.md
 ├── .gitignore
 └── LICENSE
 ```
-
----
-
-If you want, I can also create a **ready-to-go `.gitignore`** and a **LICENSE** suggestion tailored for a Qt C++ project so you can immediately push it to GitHub. Do you want me to do that?
