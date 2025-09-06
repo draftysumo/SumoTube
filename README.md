@@ -1,52 +1,132 @@
-# VideoBrowser
+# Drafty's VideoBrowser
 
-<img width="200" height="200" alt="bitmap" src="https://github.com/user-attachments/assets/94685c2c-6a2e-494f-a98f-0593f7a364e0" />
+A Qt-based desktop application to browse, preview, and play local video files with custom thumbnails and hover previews.
 
-VideoBrowser is a desktop application that organizes and displays your local video files in a grid layout, randomly shuffled each time you open the app. It automatically pulls video titles from filenames and creator names from parent folders, supports attaching custom thumbnails, and includes a search bar to quickly find videos or creators.
+---
 
-## What It Is
+## Features
 
-- **Randomized Grid**: Videos are displayed in a grid that shuffles randomly on every app launch, making browsing dynamic and engaging.
-- **Automatic Metadata**: 
-  - Titles are extracted from filenames (e.g., "Vacation.mp4" becomes "Vacation").
-  - Creator names are taken from parent folder names (e.g., a folder named "HomeVideos" is the creator).
-- **Custom Thumbnails**: Attach your own images (JPG, PNG) as thumbnails for any video, stored in a user-specified thumbnail directory.
-- **Search Bar**: Search for videos by title or creator (parent folder name) with real-time filtering.
-- **Universal Video Support**: Compatible with common video formats (e.g., MP4, MKV, AVI, MOV) supported by your system’s media player.
-- **Sort and Filter**: Sort by date, size, or duration (via FFmpeg metadata extraction) alongside search functionality.
-- **Pinning**: Right-click videos to pin them to the top of the grid, persisting through shuffles.
-- **Local and Offline**: Runs entirely on your device, ensuring privacy and no internet dependency.
-- **Cross-Platform**: Works on Windows, macOS, and Linux.
-- **Lightweight**: Efficiently handles large video libraries with minimal resource use.
+* Browse videos from a selected directory (`.mp4`, `.mkv`, `.avi`, `.mov`).
+* Auto-generate thumbnails from the midpoint of videos.
+* Support for custom thumbnail folders.
+* Hover previews showing multiple frames of the video.
+* Pin favorite videos for easy access.
+* Search videos by title or channel name.
+* Full-featured video player with:
 
-## Why It’s Useful
+  * Play/Pause
+  * Skip forward/backward (10s)
+  * Mute/Unmute
+  * Volume control
+  * Playback speed control
+  * Fullscreen toggle
 
-VideoBrowser offers a more interactive way to navigate local video collections compared to standard file explorers. The randomized grid refreshes the experience each time, helping you rediscover content. Automatic metadata extraction saves time by using existing file and folder names, while custom thumbnails improve visual organization. The search bar and pinning features make it easy to locate and prioritize specific videos or creators, which is especially helpful for large libraries. It’s practical for managing personal video archives, educational materials, or creative projects, providing an offline, privacy-focused way to browse media.
+---
 
-## Installation
+## How It Works
 
-### Install & Run
-1. Download the latest release from [Releases](https://github.com/yourusername/VideoBrowser/releases).
-2. Ensure FFmpeg (`ffmpeg` and `ffprobe`) is installed and accessible in your system PATH.
-3. Extract and run:
-   - **Windows**: `VideoBrowser.exe`
-   - **macOS**: `VideoBrowser.app`
-   - **Linux**: `./VideoBrowser`
+1. On first launch, select a video folder. Optionally, select a folder containing custom thumbnails.
+2. The app scans the directory recursively for supported video files and generates video cards with thumbnails.
+3. Hovering over a video card displays a short multi-frame preview.
+4. Right-click on a video card to pin or unpin it. Pinned videos are sorted to appear first.
+5. Click a video card to open the built-in video player with full playback controls.
 
-## Usage
+---
 
-1. **Start Up**: On first launch, select your video folder(s) (e.g., `/Videos` or `C:\Media`) and an optional thumbnail folder via the dialog prompts.
-2. **Browse**: View videos in a randomized grid showing titles, creator names, thumbnails, and durations.
-3. **Search**: Use the search bar to filter videos by title or creator (parent folder name) in real-time.
-4. **Pin Videos**: Right-click a video card to pin it to the top of the grid, keeping it prominent across shuffles.
-5. **Add Thumbnails**: Store custom thumbnails (named after the video, e.g., `VideoName.png`) in the selected thumbnail directory.
-6. **Play Videos**: Double-click a video to open it in your default media player.
-7. **Change Folders**: Use the "Video Folder" or "Thumbnail Folder" buttons to update directories, which are saved for future sessions.
+## Requirements
+
+* Qt 6 or higher
+* C++17 compatible compiler
+* `ffmpeg` and `ffprobe` installed and accessible in system PATH
+
+---
+
+## Compilation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/draftysumo/draftys-videobrowser.git
+cd video-browser
+```
+
+2. Create a build directory and run `qmake` or `cmake`:
+
+Using **qmake**:
+
+```bash
+mkdir build && cd build
+qmake ../
+make -j$(nproc)
+```
+
+Using **CMake**:
+
+```bash
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+```
+
+3. Run the application:
+
+```bash
+./VideoBrowser
+```
+
+---
 
 ## Contributing
 
-Fork, create a branch, and submit pull requests.
+1. Fork the repository.
+2. Create a feature branch:
 
-## License
+```bash
+git checkout -b feature/your-feature
+```
 
-GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+3. Make changes, commit with clear messages:
+
+```bash
+git commit -am "Add feature description"
+```
+
+4. Push to your branch:
+
+```bash
+git push origin feature/your-feature
+```
+
+5. Open a Pull Request to merge your changes into `main`.
+
+**Guidelines:**
+
+* Use clear, consistent code formatting.
+* Document new functionality in the README.
+* Keep commits atomic and descriptive.
+* Ensure `ffmpeg` commands work on all platforms.
+
+---
+
+## Download
+
+*Coming soon.*
+
+---
+
+### Suggested Repository Structure
+
+```
+video-browser/
+├── src/
+│   ├── Main.cpp
+│   ├── VideoPlayer.h
+│   └── VideoPlayer.cpp
+├── README.md
+├── .gitignore
+└── LICENSE
+```
+
+---
+
+If you want, I can also create a **ready-to-go `.gitignore`** and a **LICENSE** suggestion tailored for a Qt C++ project so you can immediately push it to GitHub. Do you want me to do that?
