@@ -33,7 +33,7 @@ A Qt-based desktop application to browse, preview, and play local video files wi
 
 ---
 
-## Requirements
+## Requirements For Building Or Compiling
 
 * Qt 6 or higher
 * C++17 compatible compiler
@@ -108,7 +108,7 @@ git push origin feature/your-feature
 
 ---
 
-## Download
+## Installation (Downloading Build)
 
 *Coming soon.*
 
