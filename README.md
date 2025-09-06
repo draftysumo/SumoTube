@@ -42,12 +42,13 @@ A Qt-based desktop application to browse, preview, and play local video files wi
 ---
 
 ## Compilation
+### Linux
 
 1. Clone the repository:
 
 ```bash
 git clone https://github.com/draftysumo/draftys-videobrowser.git
-cd video-browser
+cd draftys-video-browser
 ```
 
 2. Create a build directory and run:
@@ -64,6 +65,41 @@ make -j$(nproc)
 ./VideoBrowser
 ```
 
+### Windows (MinGW / Qt 6.x)
+
+1. **Install Requirements**  
+   - Qt 6.x MinGW 64-bit  
+   - CMake  
+   - FFmpeg (`ffmpeg.exe` and `ffprobe.exe`)
+
+2. **Open the Qt MinGW Command Prompt**
+
+3. **Create Build Directory**  
+```cmd
+cd C:\path\to\Draftys-VideoBrowser
+mkdir build
+cd build
+```
+
+Configure with CMake
+
+``` cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/mingw_64" ```
+
+
+Build the Project
+
+```mingw32-make```
+
+
+Deploy Qt DLLs
+
+```C:\Qt\6.9.2\mingw_64\bin\windeployqt.exe VideoBrowser.exe```
+
+
+Include FFmpeg
+
+```Copy ffmpeg.exe and ffprobe.exe into the same folder as VideoBrowser.exe, or add them to PATH.```
+
 ---
 
 ## Contributing
@@ -71,9 +107,8 @@ make -j$(nproc)
 1. Fork the repository.
 2. Create a feature branch:
 
-```bash
+``` bash
 git checkout -b feature/your-feature
-```
 
 3. Make changes, commit with clear messages:
 
