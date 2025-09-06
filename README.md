@@ -2,6 +2,17 @@
 
 A Qt-based desktop application to browse, preview, and play local video files with custom thumbnails and hover previews.
 
+## Table of Contents
+
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Requirements For Building Or Compiling](#requirements-for-building-or-compiling)
+- [Compilation](#compilation)
+  - [Linux](#linux)
+  - [Windows (MinGW / Qt 6.x)](#windows-mingw--qt-6x)
+- [Contributing](#contributing)
+- [Installation (Downloading Build)](#installation-downloading-build)
+- [Suggested Repository Structure](#suggested-repository-structure)
 ---
 
 ## Features
@@ -135,7 +146,7 @@ git push origin feature/your-feature
 
 ## Installation (Downloading Build)
 
-*Coming soon.*
+[Download Latest Release](https://github.com/draftysumo/draftys-videobrowser/releases)
 
 ---
 
