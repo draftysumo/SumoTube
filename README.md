@@ -74,7 +74,7 @@ make -j$(nproc)
 3. Run the application:
 
 ```bash
-./VideoBrowser
+./VideoBrowserApp
 ```
 
 ### Windows (MinGW / Qt 6.x)
@@ -110,13 +110,13 @@ mingw32-make
 6. Deploy Qt DLLs:
 
 ```cmd
-C:\Qt\6.9.2\mingw_64\bin\windeployqt.exe VideoBrowser.exe
+C:\Qt\6.9.2\mingw_64\bin\windeployqt.exe VideoBrowserApp.exe
 ```
 
 7. Include FFmpeg:
 
 ```cmd
-Copy ffmpeg.exe and ffprobe.exe into the same folder as VideoBrowser.exe, or add them to PATH.
+Copy ffmpeg.exe and ffprobe.exe into the same folder as VideoBrowserApp.exe, or add them to PATH.
 ```
 
 ---
