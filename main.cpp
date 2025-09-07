@@ -24,9 +24,9 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QRandomGenerator>
+#include <QDesktopServices>
+#include <QUrl>
 #include <algorithm>
-#include <QFile>
-#include <QTextStream>
 
 // Logging helper
 static QFile logFile("videobrowser.log");
@@ -78,15 +78,11 @@ double getVideoDuration(const QString &filePath) {
 }
 
 // Video card structure
-struct VideoCard : public QObject {
-    Q_OBJECT
-public:
-    VideoCard(QObject* parent = nullptr) : QObject(parent) {}
-    
+struct VideoCard {
     QString filePath;
     QString title;
     QString channel;
-    QToolButton* button = nullptr;
+    QToolButton* button;
     QLabel* pinLabel = nullptr;
     QLabel* thumbLabel = nullptr;
     bool pinned = false;
@@ -114,7 +110,7 @@ protected:
             if(video->hoverFrames.isEmpty()) return false;
             video->currentFrameIndex = 0;
             if(!video->hoverTimer){
-                video->hoverTimer = new QTimer(video);
+                video->hoverTimer = new QTimer(video->button);
                 QObject::connect(video->hoverTimer,&QTimer::timeout,[this](){
                     if(video->canceled || video->hoverFrames.isEmpty()) { video->hoverTimer->stop(); return; }
                     video->thumbLabel->setPixmap(video->hoverFrames[video->currentFrameIndex]);
@@ -157,7 +153,6 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
         thumbLayout->addWidget(thumbLabel);
 
         QLabel* durationLabel = new QLabel("00:00", thumbWrapper);
-        durationLabel->setObjectName("durationLabel");
         durationLabel->setStyleSheet("background-color: rgba(0,0,0,150); color: white; padding: 3px; font-size: 11px;");
         durationLabel->adjustSize();
         durationLabel->move(thumbWrapper->width()-durationLabel->width()-6, thumbWrapper->height()-durationLabel->height()-6);
@@ -185,8 +180,8 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
         btn->layout()->setContentsMargins(0,0,0,0);
         btn->layout()->addWidget(card);
 
-        QObject::connect(btn,&QToolButton::clicked,[filePath](){
-            QProcess::startDetached("xdg-open", {filePath});
+        QObject::connect(btn, &QToolButton::clicked, [filePath]() {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
         });
 
         QLabel* pinLabel = new QLabel("Pinned", btn);
@@ -195,14 +190,7 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
         pinLabel->move(5,5);
         pinLabel->setVisible(false);
 
-        VideoCard* v = new VideoCard;
-        v->filePath = filePath;
-        v->title = videoTitle;
-        v->channel = channel;
-        v->button = btn;
-        v->pinLabel = pinLabel;
-        v->thumbLabel = thumbLabel;
-        v->canceled = false;
+        VideoCard* v = new VideoCard{filePath, videoTitle, channel, btn, pinLabel, thumbLabel, false};
 
         // Custom thumbnail
         QString customThumbPath;
@@ -217,44 +205,51 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
             }
         }
         v->customThumbPath = customThumbPath;
+        v->canceled = false;
 
         // Async main thumbnail
-        QString thumbPath = tempDir.path() + "/" + videoTitle + ".png";
-        v->thumbWatcher = new QFutureWatcher<void>(v);
-        v->thumbWatcher->setFuture(QtConcurrent::run([filePath, thumbPath, v](){
+        v->thumbWatcher = new QFutureWatcher<void>(nullptr);
+        v->thumbWatcher->setFuture(QtConcurrent::run([filePath, v, &tempDir](){
             if(v->canceled) return;
+
             QPixmap pix;
+            QString thumbPath = tempDir.path() + "/" + v->title + ".png";
             if(!v->customThumbPath.isEmpty()) pix.load(v->customThumbPath);
             else { extractThumbnail(filePath, thumbPath); pix.load(thumbPath); }
+
             if(v->canceled) return;
+
             QPixmap scaled = pix.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
             v->customThumb = scaled;
+
             QMetaObject::invokeMethod(v->thumbLabel,"setPixmap",Qt::QueuedConnection,Q_ARG(QPixmap,scaled));
+
             double secs = getVideoDuration(filePath);
             QString durStr = formatDuration(secs);
-            QMetaObject::invokeMethod(v->thumbLabel->parentWidget()->findChild<QLabel*>("durationLabel"),
-                                      "setText",Qt::QueuedConnection,Q_ARG(QString,durStr));
+            QMetaObject::invokeMethod(v->thumbLabel->parentWidget()->findChild<QLabel*>(), "setText",
+                                      Qt::QueuedConnection, Q_ARG(QString,durStr));
         }));
 
-        // Async hover frames generation
-        QtConcurrent::run([filePath, title=v->title, &tempDir, v](){
+        // Async hover frames
+        QtConcurrent::run([filePath, &tempDir, v](){
             double secs = getVideoDuration(filePath);
             for(int i=1;i<=5;i++){
                 if(v->canceled) return;
                 double t = secs * i / 6.0;
-                QString hoverPath = tempDir.path() + "/" + title + "_hover_" + QString::number(i) + ".png";
+                QString hoverPath = tempDir.path() + "/" + v->title + "_hover_" + QString::number(i) + ".png";
                 QProcess ffmpeg;
                 ffmpeg.start("ffmpeg", {"-y","-ss",QString::number(t),"-i",filePath,"-vframes","1",hoverPath});
                 ffmpeg.waitForFinished();
                 QPixmap frame;
                 frame.load(hoverPath);
                 frame = frame.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
-                QPixmap finalFrame = frame;
-                QMetaObject::invokeMethod(v, [v, finalFrame](){ v->hoverFrames.append(finalFrame); }, Qt::QueuedConnection);
+                QMetaObject::invokeMethod(v->thumbLabel, [v, frame](){ v->hoverFrames.append(frame); }, Qt::QueuedConnection);
             }
         });
 
+        // Hover filter
         btn->installEventFilter(new HoverFilter(v));
+
         videos.append(v);
     }
     return videos;
@@ -333,6 +328,7 @@ int main(int argc,char *argv[]){
 
     auto reloadVideos=[&](const QString &videoBase,const QString &thumbBase){
         logMessage("Reloading videos from: " + videoBase);
+
         for(auto v: videos){
             v->canceled = true;
             if(v->hoverTimer) { v->hoverTimer->stop(); delete v->hoverTimer; }
