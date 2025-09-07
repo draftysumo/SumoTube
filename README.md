@@ -58,7 +58,7 @@ A Qt-based desktop application to browse, preview, and play local video files wi
 
 * The Fullscreen Player Controls Should AutoHide When Not Hovered On
 
-* Player Playback Speed Controls Should Doesnt Display The Right Speed
+* Player Playback Speed Controls Doesnt Display The Right Speed
 
 * Video Rows Should Reach The Edges Of The Screen
 
