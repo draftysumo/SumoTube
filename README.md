@@ -66,7 +66,7 @@ A Qt-based desktop application to browse and preview local video files with cust
 
 ```bash
 git clone https://github.com/draftysumo/draftys-videobrowser.git
-cd draftys-video-browser
+cd draftys-videobrowser
 ```
 
 2. Create a build directory and run:
