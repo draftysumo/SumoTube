@@ -52,6 +52,21 @@ A Qt-based desktop application to browse, preview, and play local video files wi
 
 ---
 
+## Known Bugs / Desired Changes—Currently Being Worked On
+
+* Separate video collums need to be closer together
+* The Fullscreen Player Controls Should AutoHide When Not Hovered On
+*Player Playback Speed Controls Should Doesnt Display The Right Speed
+*Video Rows Should Reach The Edges Of The Screen
+*Player Freaks Out When Not On Top
+*Reloading The Grid Causes Crashes
+*Pinned Videos Arent Always Restored When Relaunching The App
+*App Icon Twitches When Running BG Tasks (Linux)
+*Player Seek Bar Lags Beyond Use (Linux)
+*App Shouldn't Require A Terminal Window To Run (Windows)
+
+---
+
 ## Compilation
 ### Linux
 
