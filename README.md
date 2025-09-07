@@ -165,7 +165,6 @@ git push origin feature/your-feature
 video-browser/
 ├── main.cpp
 ├── README.md
-├── .gitignore
-├── .CMakeLists.txt
+├── CMakeLists.txt
 └── LICENSE
 ```
