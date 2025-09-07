@@ -24,11 +24,11 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QRandomGenerator>
+#include <algorithm>
 #include <QDesktopServices>
 #include <QUrl>
-#include <algorithm>
 
-// Logging helper
+// ---------------- Logging ----------------
 static QFile logFile("videobrowser.log");
 static void logMessage(const QString &msg) {
     if(!logFile.isOpen()) logFile.open(QIODevice::Append | QIODevice::Text);
@@ -39,14 +39,13 @@ static void logMessage(const QString &msg) {
     qDebug() << msg;
 }
 
-// Stable ID
+// ---------------- Helpers ----------------
 static QString fileId(const QString &path) {
     QFileInfo fi(path);
     QString c = fi.canonicalFilePath();
     return c.isEmpty() ? fi.absoluteFilePath() : c;
 }
 
-// Extract middle-frame thumbnail
 QString extractThumbnail(const QString &videoPath, const QString &thumbPath) {
     QProcess probe;
     probe.start("ffprobe", {"-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1", videoPath});
@@ -77,7 +76,7 @@ double getVideoDuration(const QString &filePath) {
     return probe.readAllStandardOutput().trimmed().toDouble();
 }
 
-// Video card structure
+// ---------------- Video Card ----------------
 struct VideoCard {
     QString filePath;
     QString title;
@@ -90,7 +89,6 @@ struct VideoCard {
     QPixmap customThumb;
     QString customThumbPath;
 
-    QFuture<void> thumbFuture;
     QFutureWatcher<void>* thumbWatcher = nullptr;
 
     QVector<QPixmap> hoverFrames;
@@ -99,7 +97,7 @@ struct VideoCard {
     bool canceled = false;
 };
 
-// Hover filter for previews
+// ---------------- Hover Filter ----------------
 class HoverFilter : public QObject {
     Q_OBJECT
 public:
@@ -128,7 +126,7 @@ private:
     VideoCard* video;
 };
 
-// Build video cards
+// ---------------- Build Video Cards ----------------
 QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &tempDir, const QString &thumbBase){
     QVector<VideoCard*> videos;
     QPixmap placeholder(320,180);
@@ -180,7 +178,7 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
         btn->layout()->setContentsMargins(0,0,0,0);
         btn->layout()->addWidget(card);
 
-        QObject::connect(btn, &QToolButton::clicked, [filePath]() {
+        QObject::connect(btn,&QToolButton::clicked,[filePath](){
             QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
         });
 
@@ -207,30 +205,28 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
         v->customThumbPath = customThumbPath;
         v->canceled = false;
 
-        // Async main thumbnail
-        v->thumbWatcher = new QFutureWatcher<void>(nullptr);
-        v->thumbWatcher->setFuture(QtConcurrent::run([filePath, v, &tempDir](){
-            if(v->canceled) return;
-
+        // Immediately show thumbnail if exists
+        if(!v->customThumbPath.isEmpty()){
             QPixmap pix;
-            QString thumbPath = tempDir.path() + "/" + v->title + ".png";
-            if(!v->customThumbPath.isEmpty()) pix.load(v->customThumbPath);
-            else { extractThumbnail(filePath, thumbPath); pix.load(thumbPath); }
+            pix.load(v->customThumbPath);
+            v->customThumb = pix.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+            v->thumbLabel->setPixmap(v->customThumb);
+        } else {
+            // Extract main thumbnail asynchronously
+            QString thumbPath = tempDir.path() + "/" + videoTitle + ".png";
+            v->thumbWatcher = new QFutureWatcher<void>(nullptr);
+            v->thumbWatcher->setFuture(QtConcurrent::run([filePath, thumbPath, v](){
+                if(v->canceled) return;
+                extractThumbnail(filePath, thumbPath);
+                QPixmap pix(thumbPath);
+                if(pix.isNull()) return;
+                QPixmap scaled = pix.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+                v->customThumb = scaled;
+                QMetaObject::invokeMethod(v->thumbLabel,"setPixmap",Qt::QueuedConnection,Q_ARG(QPixmap,scaled));
+            }));
+        }
 
-            if(v->canceled) return;
-
-            QPixmap scaled = pix.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
-            v->customThumb = scaled;
-
-            QMetaObject::invokeMethod(v->thumbLabel,"setPixmap",Qt::QueuedConnection,Q_ARG(QPixmap,scaled));
-
-            double secs = getVideoDuration(filePath);
-            QString durStr = formatDuration(secs);
-            QMetaObject::invokeMethod(v->thumbLabel->parentWidget()->findChild<QLabel*>(), "setText",
-                                      Qt::QueuedConnection, Q_ARG(QString,durStr));
-        }));
-
-        // Async hover frames
+        // Async hover frames generation
         QtConcurrent::run([filePath, &tempDir, v](){
             double secs = getVideoDuration(filePath);
             for(int i=1;i<=5;i++){
@@ -247,7 +243,6 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
             }
         });
 
-        // Hover filter
         btn->installEventFilter(new HoverFilter(v));
 
         videos.append(v);
@@ -255,7 +250,7 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
     return videos;
 }
 
-// Populate grid
+// ---------------- Populate Grid ----------------
 void populateGrid(QGridLayout* grid, QVector<VideoCard*> &videos){
     QLayoutItem* child;
     while((child=grid->takeAt(0))!=nullptr){
