@@ -1,6 +1,6 @@
 # Drafty's VideoBrowser
 
-A Qt-based desktop application to browse and preview local video files with custom thumbnails and hover previews.
+A Qt-based desktop application to browse and preview local video files with custom thumbnails, hover previews, and pinning support.
 
 ## Table of Contents
 
@@ -23,9 +23,11 @@ A Qt-based desktop application to browse and preview local video files with cust
 * Auto-generate thumbnails from the midpoint of videos.
 * Support for custom thumbnail folders.
 * Hover previews showing multiple frames of the video.
-* Pin favorite videos for easy access.
+* Pin favorite videos for easy access; pinned videos are sorted to appear first.
 * Search videos by title or channel name.
 * Open videos in your system's default video player.
+* Asynchronous thumbnail and hover-frame generation to avoid UI freezes.
+* Hover preview frames cached per video for smooth performance.
 
 ---
 
@@ -33,9 +35,11 @@ A Qt-based desktop application to browse and preview local video files with cust
 
 1. On first launch, select a video folder. Optionally, select a folder containing custom thumbnails.
 2. The app scans the directory recursively for supported video files and generates video cards with thumbnails.
-3. Hovering over a video card displays a short multi-frame preview.
-4. Right-click on a video card to pin or unpin it. Pinned videos are sorted to appear first.
-5. Click a video card to open the video using your system’s default video player.
+3. Hovering over a video card displays a short multi-frame preview. Frames are generated asynchronously and cached.
+4. Right-click on a video card to pin or unpin it. Pinned videos always appear at the start of the grid.
+5. Search dynamically filters videos by title or channel name.
+6. Click a video card to open the video using your system’s default video player.
+7. Reloading the video folder refreshes all thumbnails and hover previews safely without crashes.
 
 ---
 
@@ -44,17 +48,7 @@ A Qt-based desktop application to browse and preview local video files with cust
 * Qt 6 or higher
 * C++17 compatible compiler
 * `ffmpeg` and `ffprobe` installed and accessible in system PATH (for thumbnail generation)
-
----
-
-## Known Bugs / Desired Changes—Currently Being Worked On
-
-* Separate video columns need to be closer together
-* Video rows should reach the edges of the screen
-* Reloading the grid causes crashes
-* Pinned videos aren’t always restored when relaunching the app
-* App icon twitches when running background tasks (Linux)
-* App shouldn’t require a terminal window to run (Windows)
+* CMake (for building cross-platform)
 
 ---
 
@@ -91,35 +85,34 @@ make -j$(nproc)
    * CMake
    * FFmpeg (`ffmpeg.exe` and `ffprobe.exe`)
 
-2. **Open the Qt MinGW Command Prompt**
+2. **Open the Qt MinGW Command Prompt** and navigate to the project directory.
 
 3. **Create Build Directory**
 
 ```cmd
-cd C:\path\to\Draftys-VideoBrowser
 mkdir build
 cd build
 ```
 
-Configure with CMake:
+4. Configure with CMake:
 
 ```cmd
 cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/mingw_64"
 ```
 
-Build the project:
+5. Build the project:
 
 ```cmd
 mingw32-make
 ```
 
-Deploy Qt DLLs:
+6. Deploy Qt DLLs:
 
 ```cmd
 C:\Qt\6.9.2\mingw_64\bin\windeployqt.exe VideoBrowser.exe
 ```
 
-Include FFmpeg:
+7. Include FFmpeg:
 
 ```cmd
 Copy ffmpeg.exe and ffprobe.exe into the same folder as VideoBrowser.exe, or add them to PATH.
@@ -169,8 +162,9 @@ git push origin feature/your-feature
 
 ```
 video-browser/
-├── Main.cpp
+├── main.cpp
 ├── README.md
 ├── .gitignore
+├── .CMakeLists.txt
 └── LICENSE
 ```
