@@ -5,6 +5,8 @@ A Qt-based desktop application to browse and preview local video files with cust
 ## Table of Contents
 
 * [Features](#features)
+* [UI Components](#ui-components)
+* [Notes](#notes)
 * [How It Works](#how-it-works)
 * [Requirements For Building Or Compiling](#requirements-for-building-or-compiling)
 * [Compilation](#compilation)
@@ -175,6 +177,8 @@ git push origin feature/your-feature
 ## Installation (Downloading Build)
 
 [Download Latest Release](https://github.com/draftysumo/draftys-videobrowser/releases)
+
+! Hover preview and thumbnail generation require **FFmpeg** and **FFprobe** installed on your distro (linux).
 
 ---
 
