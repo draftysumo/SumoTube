@@ -15,19 +15,38 @@ A Qt-based desktop application to browse and preview local video files with cust
 * [Installation (Downloading Build)](#installation-downloading-build)
 * [Suggested Repository Structure](#suggested-repository-structure)
 
----
-
 ## Features
 
-* Browse videos from a selected directory (`.mp4`, `.mkv`, `.avi`, `.mov`).
-* Auto-generate thumbnails from the midpoint of videos.
-* Support for custom thumbnail folders.
-* Hover previews showing multiple frames of the video.
-* Pin favorite videos for easy access; pinned videos are sorted to appear first.
-* Search videos by title or channel name.
-* Open videos in your system's default video player.
-* Asynchronous thumbnail and hover-frame generation to avoid UI freezes.
-* Hover preview frames cached per video for smooth performance.
+* **Local Video Browsing:** Scan a folder recursively for video files (`.mp4`, `.mkv`, `.avi`, `.mov`) and display them as clickable video cards.
+* **Custom Thumbnails:** Supports custom thumbnail images stored in a separate folder. If no custom thumbnail exists, it generates one from the video automatically.
+* **Hover Previews:** Hovering over a video shows a short frame sequence preview extracted from the video.
+* **Duration Display:** Each video shows its total duration on a pill-style overlay.
+* **Pin Videos:** Pin videos to keep them at the top of the grid. Right-click on a video to pin or unpin.
+* **Dynamic Sorting:** Change the sort order instantly using the sort dropdown without reloading:
+
+  * **Home:** Pinned videos first, others shuffled (default).
+  * **Title A-Z / Z-A**
+  * **Channel A-Z**
+  * **Duration ↑ / ↓**
+* **Search:** Filter videos by title or channel dynamically as you type.
+* **Resizable Layout:** Video grid adjusts to window size with scroll support, keeping consistent spacing between cards.
+* **Open Videos:** Click a video card to open it in the system's default video player.
+
+## UI Components
+
+* **Top Bar:**
+
+  * Search bar for filtering videos.
+  * Buttons to change the video folder and custom thumbnail folder.
+  * Reload button to refresh videos.
+  * Sort dropdown to select the desired sort mode.
+* **Video Grid:** Displays video cards with thumbnail, title, channel, duration, and pinned state. Scrollable when content exceeds window size.
+
+## Notes
+
+* Hover preview and thumbnail generation require **FFmpeg** and **FFprobe** installed on your system.
+* Pinned videos are preserved across sessions using `QSettings`.
+* Vertical spacing between video rows is fixed to ensure a consistent grid layout, regardless of window height.
 
 ---
 
