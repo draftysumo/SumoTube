@@ -44,7 +44,7 @@ A Qt-based desktop application to browse and preview local video files with cust
 
 ## Notes
 
-* Hover preview and thumbnail generation require **FFmpeg** and **FFprobe** installed on your system.
+* Hover preview and thumbnail generation require **FFmpeg** and **FFprobe** installed on your system (linux).
 * Pinned videos are preserved across sessions using `QSettings`.
 * Vertical spacing between video rows is fixed to ensure a consistent grid layout, regardless of window height.
 
