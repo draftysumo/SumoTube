@@ -8,23 +8,24 @@ A Qt-based desktop application to browse and preview local video files with cust
 * [UI Components](#ui-components)
 * [Notes](#notes)
 * [How It Works](#how-it-works)
-* [Requirements For Building Or Compiling](#requirements-for-building-or-compiling)
+* [Requirements For Building](#requirements-for-building)
 * [Compilation](#compilation)
 
   * [Linux](#linux)
   * [Windows (MinGW / Qt 6.x)](#windows-mingw--qt-6x)
 * [Contributing](#contributing)
-* [Installation (Downloading Build)](#installation-downloading-build)
+* [Installation (Downloading Release)](#installation-downloading-release)
 * [Suggested Repository Structure](#suggested-repository-structure)
 
 ## Features
 
 * **Local Video Browsing:** Scan a folder recursively for video files (`.mp4`, `.mkv`, `.avi`, `.mov`) and display them as clickable video cards.
-* **Custom Thumbnails:** Supports custom thumbnail images stored in a separate folder. If no custom thumbnail exists, it generates one from the video automatically.
+* **Custom Thumbnails:** Supports custom thumbnail images stored in the same or a separate folder. If no custom thumbnail exists, it generates one from the video automatically.
 * **Hover Previews:** Hovering over a video shows a short frame sequence preview extracted from the video.
 * **Duration Display:** Each video shows its total duration on a pill-style overlay.
 * **Pin Videos:** Pin videos to keep them at the top of the grid. Right-click on a video to pin or unpin.
 * **Dynamic Sorting:** Change the sort order instantly using the sort dropdown without reloading:
+* **Home Page Sort Option** A randomly sorted sort option to mimick an algorithmic home page to rediscover videos.
 
   * **Home:** Pinned videos first, others shuffled (default).
   * **Title A-Z / Z-A**
@@ -64,7 +65,7 @@ A Qt-based desktop application to browse and preview local video files with cust
 
 ---
 
-## Requirements For Building Or Compiling
+## Requirements For Building
 
 * Qt 6 or higher
 * C++17 compatible compiler
@@ -95,7 +96,7 @@ make -j$(nproc)
 3. Run the application:
 
 ```bash
-./VideoBrowserApp
+./Draftys-VideoBrowser
 ```
 
 ### Windows (MinGW / Qt 6.x)
@@ -131,7 +132,7 @@ mingw32-make
 6. Deploy Qt DLLs:
 
 ```cmd
-C:\Qt\6.9.2\mingw_64\bin\windeployqt.exe VideoBrowserApp.exe
+C:\Qt\6.9.2\mingw_64\bin\windeployqt.exe Draftys-VideoBrowser.exe
 ```
 
 7. Include FFmpeg:
@@ -174,7 +175,7 @@ git push origin feature/your-feature
 
 ---
 
-## Installation (Downloading Build)
+## Installation (Downloading Release)
 
 [Download Latest Release](https://github.com/draftysumo/draftys-videobrowser/releases)
 
