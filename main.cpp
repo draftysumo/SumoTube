@@ -27,10 +27,12 @@
 #include <algorithm>
 #include <QDesktopServices>
 #include <QUrl>
-#include <QComboBox>
+#include <QStyle>
+#include <QStackedLayout>
+#include <QMenu>
 
 // ---------------- Logging ----------------
-static QFile logFile("videobrowser.log");
+static QFile logFile("draftys-videobrowser.log");
 static void logMessage(const QString &msg) {
     if(!logFile.isOpen()) logFile.open(QIODevice::Append | QIODevice::Text);
     QTextStream out(&logFile);
@@ -57,7 +59,7 @@ QString extractThumbnail(const QString &videoPath, const QString &thumbPath) {
 
     QProcess ffmpeg;
     ffmpeg.start("ffmpeg", {"-y","-ss",QString::number(midpoint),"-i",videoPath,"-vframes","1",thumbPath});
-    ffmpeg.waitForFinished();
+    ffmpeg.waitForFinished(1000);
     return thumbPath;
 }
 
@@ -89,6 +91,7 @@ struct VideoCard {
 
     QPixmap customThumb;
     QString customThumbPath;
+    QString customThumbOverride; // per-video custom override
 
     QFutureWatcher<void>* thumbWatcher = nullptr;
 
@@ -128,118 +131,122 @@ private:
 };
 
 // ---------------- Build Video Cards ----------------
-QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &tempDir, const QString &thumbBase) {
+QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &tempDir){
     QVector<VideoCard*> videos;
     QPixmap placeholder(320,180);
     placeholder.fill(Qt::darkGray);
 
     QDirIterator it(basePath, {"*.mp4","*.mkv","*.avi","*.mov"}, QDir::Files, QDirIterator::Subdirectories);
-    while(it.hasNext()) {
+    while(it.hasNext()){
         QString filePath = it.next();
         QFileInfo info(filePath);
         QString channel = QFileInfo(info.dir().path()).fileName();
         QString videoTitle = info.completeBaseName();
 
-        // --- Thumbnail wrapper ---
-        QWidget* thumbWrapper = new QWidget;
-        thumbWrapper->setFixedSize(320,180);
-        thumbWrapper->setStyleSheet(
-            "background-color: #1e1e1e;"
-            "border-radius: 8px;"
-            "border: 1px solid #333;"
-        );
+        // Modern Card UI
+        QFrame* cardFrame = new QFrame;
+        cardFrame->setFixedSize(340, 245);
+        cardFrame->setStyleSheet(R"(
+            QFrame {
+                background: #23272e;
+                border-radius: 8px;
+                border: 1px solid #444;
+                box-shadow: 0px 4px 16px rgba(0,0,0,0.18);
+            }
+            QFrame:hover {
+                border: 2px solid #0078d7;
+                background: #282c34;
+            }
+        )");
 
-        QVBoxLayout* thumbLayout = new QVBoxLayout(thumbWrapper);
-        thumbLayout->setContentsMargins(0,0,0,0);
-        thumbLayout->setAlignment(Qt::AlignCenter);
+        QVBoxLayout* cardLayout = new QVBoxLayout(cardFrame);
+        cardLayout->setSpacing(8);
+        cardLayout->setContentsMargins(12,12,12,12);
+
+        QWidget* thumbContainer = new QWidget;
+        thumbContainer->setFixedSize(320,180);
+        QStackedLayout* thumbStack = new QStackedLayout(thumbContainer);
+        thumbStack->setStackingMode(QStackedLayout::StackAll);
 
         QLabel* thumbLabel = new QLabel;
         thumbLabel->setAlignment(Qt::AlignCenter);
         thumbLabel->setPixmap(placeholder);
-        thumbLayout->addWidget(thumbLabel);
+        thumbLabel->setFixedSize(320,180);
 
-        // --- Duration label ---
-        QLabel* durationLabel = new QLabel("00:00", thumbWrapper);
-        durationLabel->setStyleSheet(
-            "background-color: rgba(0,0,0,160);"
-            "color: white;"
-            "padding: 2px 6px;"
-            "font-size: 11px;"
-            "border-radius: 4px;"
-        );
+        // ---- Modern Duration Pill ----
+        QLabel* durationLabel = new QLabel("00:00");
+        durationLabel->setStyleSheet(R"(
+            background-color: rgba(0,0,0,200);
+            color: white;
+            padding: 2px 10px;
+            font-size: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,80);
+        )");
+        durationLabel->setAlignment(Qt::AlignRight | Qt::AlignBottom);
 
-        double dur = getVideoDuration(filePath);
-        durationLabel->setText(formatDuration(dur));
-        durationLabel->adjustSize();
-        durationLabel->move(thumbWrapper->width()-durationLabel->width()-8,
-                            thumbWrapper->height()-durationLabel->height()-8);
-        durationLabel->show();
+        QWidget* durationWidget = new QWidget;
+        durationWidget->setAttribute(Qt::WA_TranslucentBackground);
+        QHBoxLayout* durationLayout = new QHBoxLayout(durationWidget);
+        durationLayout->addStretch();
+        durationLayout->addWidget(durationLabel);
+        durationLayout->setContentsMargins(0,0,8,8);
 
-        // --- Title & Channel labels ---
+        thumbStack->addWidget(thumbLabel);
+        thumbStack->addWidget(durationWidget);
+        cardLayout->addWidget(thumbContainer);
+
         QLabel* titleLabel = new QLabel(videoTitle);
         titleLabel->setAlignment(Qt::AlignLeft);
-        titleLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: white;");
+        titleLabel->setStyleSheet("font-size: 15px; font-weight: 600; color: #e0e0e0; background: transparent; border: none;");
 
         QLabel* channelLabel = new QLabel(channel);
         channelLabel->setAlignment(Qt::AlignLeft);
-        channelLabel->setStyleSheet("font-size: 12px; color: #aaa;");
+        channelLabel->setStyleSheet("font-size: 12px; color: #8a8a8a; background: transparent; border: none;");
 
-        // --- Card container ---
-        QWidget* card = new QWidget;
-        QVBoxLayout* cardLayout = new QVBoxLayout(card);
-        cardLayout->setSpacing(4);
-        cardLayout->setContentsMargins(6,6,6,6);
-        cardLayout->addWidget(thumbWrapper);
-        cardLayout->addWidget(titleLabel);
-        cardLayout->addWidget(channelLabel);
+        QWidget* infoWidget = new QWidget;
+        QVBoxLayout* infoLayout = new QVBoxLayout(infoWidget);
+        infoLayout->setContentsMargins(0,4,0,0);
+        infoLayout->setSpacing(2);
+        infoLayout->addWidget(titleLabel);
+        infoLayout->addWidget(channelLabel);
+        infoWidget->setStyleSheet("background: transparent;");
+        cardLayout->addWidget(infoWidget);
 
-        // --- Clickable toolbutton wrapper ---
         QToolButton* btn = new QToolButton;
         btn->setAutoRaise(true);
-        btn->setFixedSize(340,240);
-        btn->setStyleSheet(
-            "QToolButton { border: none; border-radius: 8px; }"
-            "QToolButton:hover { background-color: #2a2a2a; }"
-        );
+        btn->setFixedSize(340, 245);
+        btn->setStyleSheet("QToolButton { border: none; background: transparent; }");
         btn->setLayout(new QVBoxLayout);
         btn->layout()->setContentsMargins(0,0,0,0);
-        btn->layout()->addWidget(card);
+        btn->layout()->addWidget(cardFrame);
 
         QObject::connect(btn,&QToolButton::clicked,[filePath](){
             QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
         });
 
-        // --- Pin label ---
         QLabel* pinLabel = new QLabel("Pinned", btn);
-        pinLabel->setStyleSheet(
-            "font-size:12px; font-weight:bold; color:white;"
-            "background-color: rgba(0,0,0,150); padding: 2px;"
-        );
-        pinLabel->adjustSize();
-        pinLabel->move(5,5);
+        pinLabel->setStyleSheet("font-size:18px; color:#ffd700; background: transparent;");
+        pinLabel->move(10,10);
         pinLabel->setVisible(false);
 
-        // --- VideoCard setup ---
         VideoCard* v = new VideoCard{filePath, videoTitle, channel, btn, pinLabel, thumbLabel, false};
 
-        // Custom thumbnail
-        QString customThumbPath;
-        if(!thumbBase.isEmpty()){
-            QStringList exts = {"png","jpg","jpeg"};
-            for(const QString &ext : exts){
-                QString path = thumbBase + "/" + videoTitle + "." + ext;
-                if(QFile::exists(path)){
-                    customThumbPath = path;
-                    break;
-                }
-            }
+        // Load per-video custom thumbnail override
+        QSettings settings("Drafty Sumo","Draftys-VideoBrowser");
+        QString thumbOverride = settings.value("thumbOverride_" + fileId(filePath)).toString();
+        v->customThumbOverride = thumbOverride;
+
+        QString useThumbPath;
+        if(!thumbOverride.isEmpty() && QFile::exists(thumbOverride)){
+            useThumbPath = thumbOverride;
         }
-        v->customThumbPath = customThumbPath;
+        v->customThumbPath = useThumbPath;
         v->canceled = false;
 
-        if(!v->customThumbPath.isEmpty()){
+        if(!useThumbPath.isEmpty()){
             QPixmap pix;
-            pix.load(v->customThumbPath);
+            pix.load(useThumbPath);
             v->customThumb = pix.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
             v->thumbLabel->setPixmap(v->customThumb);
         } else {
@@ -256,69 +263,53 @@ QVector<VideoCard*> buildVideoCards(const QString &basePath, QTemporaryDir &temp
             }));
         }
 
-        QtConcurrent::run([filePath, &tempDir, v](){
+        auto hoverFuture = QtConcurrent::run([filePath, &tempDir, v, durationLabel](){
             double secs = getVideoDuration(filePath);
+            QMetaObject::invokeMethod(durationLabel, "setText", Qt::QueuedConnection, Q_ARG(QString, formatDuration(secs)));
             for(int i=1;i<=5;i++){
                 if(v->canceled) return;
                 double t = secs * i / 6.0;
                 QString hoverPath = tempDir.path() + "/" + v->title + "_hover_" + QString::number(i) + ".png";
                 QProcess ffmpeg;
                 ffmpeg.start("ffmpeg", {"-y","-ss",QString::number(t),"-i",filePath,"-vframes","1",hoverPath});
-                ffmpeg.waitForFinished();
+                ffmpeg.waitForFinished(1000);
                 QPixmap frame;
                 frame.load(hoverPath);
                 frame = frame.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
                 QMetaObject::invokeMethod(v->thumbLabel, [v, frame](){ v->hoverFrames.append(frame); }, Qt::QueuedConnection);
             }
         });
+        Q_UNUSED(hoverFuture);
 
         btn->installEventFilter(new HoverFilter(v));
-
         videos.append(v);
     }
     return videos;
 }
 
+
 // ---------------- Populate Grid ----------------
-void populateGrid(QGridLayout* grid, QVector<VideoCard*> &videos, const QString &sortMode){
+void populateGrid(QGridLayout* grid, QVector<VideoCard*> &videos){
     QLayoutItem* child;
     while((child=grid->takeAt(0))!=nullptr){
         if(child->widget()) child->widget()->setParent(nullptr);
         delete child;
     }
 
-    // --- Sorting ---
-    if(sortMode=="Home"){
-        std::stable_sort(videos.begin(), videos.end(), [](VideoCard* a, VideoCard* b){ return a->pinned && !b->pinned; });
-        int firstUnpinned = 0;
-        while(firstUnpinned < videos.size() && videos[firstUnpinned]->pinned) firstUnpinned++;
-        std::shuffle(videos.begin() + firstUnpinned, videos.end(), *QRandomGenerator::global());
-    } else {
-        std::stable_sort(videos.begin(), videos.end(), [&](VideoCard* a, VideoCard* b){
-            if(a->pinned != b->pinned) return a->pinned;
-            if(sortMode=="Title A-Z") return a->title.toLower() < b->title.toLower();
-            if(sortMode=="Title Z-A") return a->title.toLower() > b->title.toLower();
-            if(sortMode=="Channel A-Z") return a->channel.toLower() < b->channel.toLower();
-            if(sortMode=="Duration ↑") return getVideoDuration(a->filePath) < getVideoDuration(b->filePath);
-            if(sortMode=="Duration ↓") return getVideoDuration(a->filePath) > getVideoDuration(b->filePath);
-            return false;
-        });
-    }
+    std::stable_sort(videos.begin(),videos.end(),
+                     [](VideoCard* a, VideoCard* b){ return a->pinned && !b->pinned; });
 
     int row=0, col=0, maxCols=5;
-    int hSpacing=10, vSpacing=1;  // <--- tighter row spacing
+    int hSpacing=18, vSpacing=18;
     grid->setHorizontalSpacing(hSpacing);
     grid->setVerticalSpacing(vSpacing);
-    grid->setContentsMargins(10,10,10,10);
+    grid->setContentsMargins(18,18,18,18);
 
     for(auto &v:videos){
         grid->addWidget(v->button,row,col,Qt::AlignTop | Qt::AlignLeft);
         if(v->pinLabel) v->pinLabel->setVisible(v->pinned);
         col++; if(col>=maxCols){ col=0; row++; }
     }
-
-    // --- Prevent stretching so spacing stays fixed ---
-    grid->setSizeConstraint(QLayout::SetFixedSize);
 
     if(grid->parentWidget()){
         int totalWidth = maxCols*340 + (maxCols-1)*hSpacing
@@ -332,48 +323,86 @@ int main(int argc,char *argv[]){
     QApplication app(argc,argv);
     logMessage("App started");
 
-    QSettings settings("MyCompany","VideoBrowser");
+    QSettings settings("Drafty Sumo","Draftys-VideoBrowser");
     QWidget window;
-    window.setWindowTitle("Video Browser");
+    window.setWindowTitle("Draftys VideoBrowser");
+    window.setStyleSheet(R"(
+        QWidget {
+            background: #181a20;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+        }
+    )");
     QVBoxLayout* mainLayout = new QVBoxLayout(&window);
 
+    // Top Bar
     QHBoxLayout* topBar = new QHBoxLayout;
+    topBar->setSpacing(12);
+    topBar->setContentsMargins(12,12,12,12);
+
     QLineEdit* searchBar = new QLineEdit;
     searchBar->setPlaceholderText("Search videos or channels...");
-    QPushButton* changeVideoDirBtn = new QPushButton("Video Folder");
-    QPushButton* changeThumbDirBtn = new QPushButton("Thumbnail Folder");
-    QPushButton* reloadBtn = new QPushButton("Reload");
-    QComboBox* sortCombo = new QComboBox;
-    sortCombo->addItems({"Home","Title A-Z","Title Z-A","Channel A-Z","Duration ↑","Duration ↓"});
-    sortCombo->setCurrentText("Home");
+    searchBar->setStyleSheet(R"(
+        QLineEdit {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: #23272e;
+            color: #e0e0e0;
+            font-size: 15px;
+            border: 1px solid #444;
+        }
+    )");
 
-    topBar->addWidget(searchBar);
-    topBar->addWidget(changeVideoDirBtn);
-    topBar->addWidget(changeThumbDirBtn);
-    topBar->addWidget(reloadBtn);
-    topBar->addWidget(sortCombo);
+    QPushButton* changeVideoDirBtn = new QPushButton("Video Folder");
+    changeVideoDirBtn->setIcon(QApplication::style()->standardIcon(QStyle::SP_DirIcon));
+
+    QPushButton* reloadBtn = new QPushButton("Reload");
+    reloadBtn->setIcon(QApplication::style()->standardIcon(QStyle::SP_BrowserReload));
+
+    for(auto btn : {changeVideoDirBtn, reloadBtn}) {
+        btn->setStyleSheet(R"(
+            QPushButton {
+                padding: 8px 18px;
+                border-radius: 8px;
+                background: #0078d7;
+                color: white;
+                font-weight: 600;
+                font-size: 14px;
+                border: none;
+            }
+            QPushButton:hover {
+                background: #005fa3;
+            }
+        )");
+    }
+
+    topBar->addWidget(searchBar, 2);
+    topBar->addWidget(changeVideoDirBtn, 1);
+    topBar->addWidget(reloadBtn, 1);
     mainLayout->addLayout(topBar);
 
     QScrollArea* scroll = new QScrollArea;
+    scroll->setStyleSheet(R"(
+        QScrollArea {
+            background: #181a20;
+            border: none;
+        }
+    )");
     QWidget* container = new QWidget;
     QGridLayout* grid = new QGridLayout(container);
 
     QTemporaryDir tempDir;
-    QVector<VideoCard*> videos;
+    QVector<VideoCard*> videos;          // all loaded
+    QVector<VideoCard*> filteredVideos;  // filtered by search
 
     QString videoDir=settings.value("videoDir").toString();
-    QString thumbDir=settings.value("thumbDir").toString();
-
     if(videoDir.isEmpty() || !QDir(videoDir).exists())
         videoDir=QFileDialog::getExistingDirectory(nullptr,"Select Video Directory");
-    if(thumbDir.isEmpty() || !QDir(thumbDir).exists())
-        thumbDir="";
 
     if(videoDir.isEmpty()) return 0;
     settings.setValue("videoDir",videoDir);
-    settings.setValue("thumbDir",thumbDir);
 
-    auto reloadVideos=[&](const QString &videoBase,const QString &thumbBase){
+    auto reloadVideos=[&](const QString &videoBase){
         logMessage("Reloading videos from: " + videoBase);
 
         for(auto v: videos){
@@ -385,7 +414,7 @@ int main(int argc,char *argv[]){
         }
         videos.clear();
 
-        videos = buildVideoCards(videoBase,tempDir,thumbBase);
+        videos = buildVideoCards(videoBase,tempDir);
 
         QStringList savedPins=settings.value("pinnedFiles").toStringList();
         for(auto &v:videos) v->pinned = savedPins.contains(fileId(v->filePath));
@@ -393,55 +422,68 @@ int main(int argc,char *argv[]){
         for(auto &v:videos){
             v->button->setContextMenuPolicy(Qt::CustomContextMenu);
             const QString id=fileId(v->filePath);
-            QObject::connect(v->button,&QToolButton::customContextMenuRequested,[&,id](const QPoint &){
-                for(auto &x:videos){ if(fileId(x->filePath)==id){ x->pinned=!x->pinned; break; } }
-                QStringList pins=settings.value("pinnedFiles").toStringList();
-                if(pins.contains(id)) pins.removeAll(id); else pins.append(id);
-                settings.setValue("pinnedFiles",pins);
-                populateGrid(grid,videos,sortCombo->currentText());
+            QObject::connect(v->button,&QToolButton::customContextMenuRequested,[&,id,v](const QPoint &pos){
+                QMenu menu;
+                QAction* pinAct = menu.addAction(v->pinned ? "Unpin" : "Pin");
+                QAction* thumbAct = menu.addAction("Set Thumbnail...");
+                QAction* chosen = menu.exec(v->button->mapToGlobal(pos));
+
+                if(chosen == pinAct){
+                    v->pinned = !v->pinned;
+                    QStringList pins=settings.value("pinnedFiles").toStringList();
+                    if(pins.contains(id)) pins.removeAll(id); else pins.append(id);
+                    settings.setValue("pinnedFiles",pins);
+                    populateGrid(grid,filteredVideos); // refresh filtered view
+                }
+                else if(chosen == thumbAct){
+                    QString path = QFileDialog::getOpenFileName(nullptr,"Select Thumbnail Image",QString(), "Images (*.png *.jpg *.jpeg)");
+                    if(!path.isEmpty()){
+                        settings.setValue("thumbOverride_" + id, path);
+                        QPixmap pix; pix.load(path);
+                        v->customThumb = pix.scaled(320,180,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+                        v->thumbLabel->setPixmap(v->customThumb);
+                    }
+                }
             });
         }
 
-        populateGrid(grid,videos,sortCombo->currentText());
+        // reset filter when reloading
+        filteredVideos = videos;
+        populateGrid(grid, filteredVideos);
     };
 
-    reloadVideos(videoDir,thumbDir);
-
+    reloadVideos(videoDir);
+    QObject::connect(reloadBtn,&QPushButton::clicked,[&](){ reloadVideos(videoDir); });
     QObject::connect(changeVideoDirBtn,&QPushButton::clicked,[&](){
-        QString newPath=QFileDialog::getExistingDirectory(nullptr,"Select Video Directory");
-        if(!newPath.isEmpty()){ videoDir=newPath; settings.setValue("videoDir",videoDir); reloadVideos(videoDir,thumbDir); }
-    });
-
-    QObject::connect(changeThumbDirBtn,&QPushButton::clicked,[&](){
-        QString newPath=QFileDialog::getExistingDirectory(nullptr,"Select Custom Thumbnail Folder");
-        if(!newPath.isEmpty()){ thumbDir=newPath; settings.setValue("thumbDir",thumbDir); reloadVideos(videoDir,thumbDir); }
-    });
-
-    QObject::connect(reloadBtn,&QPushButton::clicked,[&](){
-        reloadVideos(videoDir,thumbDir);
-    });
-
-    QObject::connect(sortCombo,QOverload<const QString &>::of(&QComboBox::currentTextChanged),[&](const QString &text){
-        populateGrid(grid,videos,text);
-    });
-
-    QObject::connect(searchBar,&QLineEdit::textChanged,[&](const QString &text){
-        for(auto &v:videos){
-            bool match = v->title.contains(text,Qt::CaseInsensitive) || v->channel.contains(text,Qt::CaseInsensitive);
-            v->button->setVisible(match);
+        QString dir=QFileDialog::getExistingDirectory(nullptr,"Select Video Directory");
+        if(!dir.isEmpty()){
+            settings.setValue("videoDir",dir);
+            reloadVideos(dir);
         }
+    });
+
+    // --- Search connection ---
+    QObject::connect(searchBar, &QLineEdit::textChanged, [&](const QString &query){
+        QString search = query.trimmed().toLower();
+        filteredVideos.clear();
+        if(search.isEmpty()){
+            filteredVideos = videos; // show all
+        } else {
+            for(auto v : videos){
+                if(v->title.toLower().contains(search) ||
+                   v->channel.toLower().contains(search)){
+                    filteredVideos.append(v);
+                }
+            }
+        }
+        populateGrid(grid, filteredVideos);
     });
 
     scroll->setWidget(container);
     scroll->setWidgetResizable(true);
     mainLayout->addWidget(scroll);
-
-    window.resize(1000,700);
-    window.show();
-
-    int result = app.exec();
-    logMessage("App exited with code: " + QString::number(result));
-    return result;
+    window.showMaximized();
+    return app.exec();
 }
 
 #include "main.moc"
