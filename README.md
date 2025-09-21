@@ -167,7 +167,7 @@ git push origin feature/your-feature
 
 ---
 
-## Installation (Downloading Release)
+## Installation (Pre-Built)
 
 [Download Latest Release](https://github.com/draftysumo/draftys-videobrowser/releases)
 
