@@ -24,13 +24,7 @@ A Qt-based desktop application to browse and preview local video files with cust
 * **Hover Previews:** Hovering over a video shows a short frame sequence preview extracted from the video.
 * **Duration Display:** Each video shows its total duration on a pill-style overlay.
 * **Pin Videos:** Pin videos to keep them at the top of the grid. Right-click on a video to pin or unpin.
-* **Dynamic Sorting:** Change the sort order instantly using the sort dropdown without reloading:
-* **Home Page Sort Option** A randomly sorted sort option to mimick an algorithmic home page to rediscover videos.
-
-  * **Home:** Pinned videos first, others shuffled (default).
-  * **Title A-Z / Z-A**
-  * **Channel A-Z**
-  * **Duration ↑ / ↓**
+* **Home Page** Randomly sorted to mimick an algorithmic home page to rediscover videos.
 * **Search:** Filter videos by title or channel dynamically as you type.
 * **Resizable Layout:** Video grid adjusts to window size with scroll support, keeping consistent spacing between cards.
 * **Open Videos:** Click a video card to open it in the system's default video player.
@@ -42,21 +36,20 @@ A Qt-based desktop application to browse and preview local video files with cust
   * Search bar for filtering videos.
   * Buttons to change the video folder and custom thumbnail folder.
   * Reload button to refresh videos.
-  * Sort dropdown to select the desired sort mode.
 * **Video Grid:** Displays video cards with thumbnail, title, channel, duration, and pinned state. Scrollable when content exceeds window size.
 
 ## Notes
 
 * Hover preview and thumbnail generation require **FFmpeg** and **FFprobe** installed on your system (linux).
 * Pinned videos are preserved across sessions using `QSettings`.
-* Vertical spacing between video rows is fixed to ensure a consistent grid layout, regardless of window height.
+* Space between videos is based on how many videos are loaded into the app, if you only have a few videos the gaps will be really large - thats normal.
 
 ---
 
 ## How It Works
 
-1. On first launch, select a video folder. Optionally, select a folder containing custom thumbnails.
-2. The app scans the directory recursively for supported video files and generates video cards with thumbnails.
+1. On first launch, select a video folder.
+2. The app scans the directory recursively for supported video files and thumbnails with the name file name and generates video cards with auto gen thumbnails when custom ones arent avaliable.
 3. Hovering over a video card displays a short multi-frame preview. Frames are generated asynchronously and cached.
 4. Right-click on a video card to pin or unpin it. Pinned videos always appear at the start of the grid.
 5. Search dynamically filters videos by title or channel name.
