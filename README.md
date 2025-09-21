@@ -34,8 +34,7 @@ A Qt-based desktop application to browse and preview local video files with cust
 * **Top Bar:**
 
   * Search bar for filtering videos.
-  * Buttons to change the video folder and custom thumbnail folder.
-  * Reload button to refresh videos.
+  * Buttons to change the video folder and refresh the app.
 * **Video Grid:** Displays video cards with thumbnail, title, channel, duration, and pinned state. Scrollable when content exceeds window size.
 
 ## Notes
