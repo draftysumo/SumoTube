@@ -100,7 +100,7 @@ make -j$(nproc)
    * FFmpeg (`ffmpeg.exe` and `ffprobe.exe`)
    * Draftys-VideoBrowser source code
 
-2. **Unzip the source code** .zip file, then **open the Qt MinGW Command Prompt** and navigate (cd) into the **project directory** (c:\users\user\downloads)
+2. **Unzip the source code** .zip file, then **open the Qt MinGW Command Prompt** and navigate (cd) into the **project directory** (c:\users\user\downloads\draftys-videobrowser)
 
 3. **Create Build Directory**
 
