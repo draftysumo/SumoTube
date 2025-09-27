@@ -82,7 +82,7 @@ Download the latest builds from the [Releases page](https://github.com/draftysum
 ## Requirements For Building
 
 * Node.js (>= 18 recommended)
-* npm or yarn
+* npm
 * Electron
 
 
