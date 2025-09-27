@@ -1,21 +1,17 @@
 # SumoTube (Beta)
 
-An **Electron desktop application** to browse and preview local video files with custom thumbnails, artist views, hover previews, random sorting, and pinning support. The app remembers your last chosen folder and preserves pinned videos, custom thumbnails, and artist profiles between sessions.
+An Electron desktop application to browse and preview local video files with custom thumbnails, artist views, hover previews, random sorting, and pinning support. The app remembers your last chosen folder and preserves pinned videos, custom thumbnails, and artist profiles between sessions.
 
 ## Table of Contents
 
 * [Features](#features)
 * [UI Components](#ui-components)
-* [Notes](#notes)
 * [How It Works](#how-it-works)
-* [Requirements For Building](#requirements-for-building)
+* [Installation](#installation)
 * [Compilation](#compilation)
-
   * [Linux](#linux)
   * [Windows](#windows)
 * [Contributing](#contributing)
-* [Installation](#installation)
-* [Suggested Repository Structure](#suggested-repository-structure)
 
 ---
 
@@ -60,14 +56,6 @@ An **Electron desktop application** to browse and preview local video files with
 
 ---
 
-## Notes
-
-* No external dependencies like FFmpeg are required. Thumbnails and previews are extracted directly via HTML5 video elements.
-* Custom state (pinned videos, bios, thumbnails) is saved in **localStorage** inside Electron.
-* The last opened folder is remembered via `settings.json` in the app’s user data directory.
-
----
-
 ## How It Works
 
 1. On startup, the app restores the last folder (if available) and rebuilds the video grid.
@@ -81,13 +69,18 @@ An **Electron desktop application** to browse and preview local video files with
 
 ---
 
+## Installation
+
+Download the latest builds from the [Releases page](https://github.com/draftysumo/sumotube/releases).
+
+---
+
 ## Requirements For Building
 
 * Node.js (>= 18 recommended)
 * npm or yarn
 * Electron
 
----
 
 ## Compilation
 
@@ -97,6 +90,10 @@ An **Electron desktop application** to browse and preview local video files with
 git clone https://github.com/draftysumo/sumotube.git
 cd sumotube
 npm install
+```
+
+To test:
+```bash
 npm start
 ```
 
@@ -117,7 +114,7 @@ cd sumotube
 npm install
 ```
 
-3. Run the app:
+3. Test the app:
 
 ```cmd
 npm start
@@ -155,14 +152,6 @@ git push origin feature/my-feature
 * Document new features in the README.
 * Keep commits small and descriptive.
 
----
-
-## Installation
-
-Download the latest builds from the [Releases page](https://github.com/draftysumo/sumotube/releases).
-
----
-
 ## Suggested Repository Structure
 
 ```
@@ -175,3 +164,4 @@ sumotube/
 ├── README.md
 └── assets/
 ```
+---
