@@ -1,0 +1,65 @@
+:root{
+  --bg:#071026; --card:#0b1220; --muted:#9aa4b2; --accent:#7c5cff; --glass: rgba(255,255,255,0.04);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto; background:linear-gradient(180deg,#071021 0%, #081226 60%); color:#e6eef8}
+main{display:flex;height:100vh}
+.leftpane{width:300px;padding:18px;border-right:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);display:flex;flex-direction:column;overflow:hidden}
+.left-controls{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+/* Bigger, cleaner icon buttons */
+.left-controls button{padding:0;border-radius:10px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;font-size:20px;transition:transform .12s,background .12s}
+.left-controls select{padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);cursor:pointer}
+.left-controls button:hover{background:var(--glass);transform:translateY(-2px)}
+#search{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);margin-bottom:12px}
+.leftpane h3{margin:0 0 8px 0;color:var(--muted)}
+/* only vertical scroll for artists, hide horizontal overflow to prevent hover-induced scrollbar */
+.leftpane ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;overflow-y:auto;overflow-x:hidden;padding-right:6px}
+.leftpane li{padding:10px;border-radius:8px;cursor:pointer;background:transparent;transition:background .12s,transform .08s;will-change:transform}
+.leftpane li:hover{background:var(--glass);transform:translateX(6px)}
+.gridwrap{flex:1;padding:18px;overflow:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:12px;border-radius:14px;position:relative;box-shadow:0 6px 18px rgba(2,6,23,0.6);display:flex;flex-direction:column;justify-content:space-between;transition:transform .12s,box-shadow .12s,outline .08s}
+.card:hover{transform:translateY(-6px);box-shadow:0 12px 36px rgba(2,6,23,0.7)}
+.card.selected{outline:3px solid rgba(124,92,255,0.25);transform:translateY(-8px);box-shadow:0 18px 40px rgba(2,6,23,0.75)}
+.thumbwrap{position:relative;border-radius:10px;overflow:hidden;width:100%;aspect-ratio:16/9;background:#0b1220}
+.thumbwrap::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.06));opacity:0;transition:opacity .12s}
+.card:hover .thumbwrap::after{opacity:0.12}
+.thumb-canvas,.thumb-img,.preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.thumb-img{display:none}
+.preview{display:none}
+.pin-icon{position:absolute;left:8px;top:8px;font-size:20px}
+.meta{padding-top:10px}
+.title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.title{font-weight:600}
+.artist-line{display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--muted)}
+.artist-pfp{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#111}
+.artist-name{font-size:13px}
+.duration-pill{position:absolute;right:18px;top:18px;background:rgba(0,0,0,0.7);padding:6px 10px;border-radius:999px;font-weight:600;min-width:48px;text-align:center;font-size:13px}
+
+/* Artist page specific */
+.artist-header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.artist-header .big-pfp{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#111}
+.artist-header .artist-meta{display:flex;flex-direction:column}
+.artist-header .artist-meta h1{margin:0;font-size:22px}
+.artist-header .artist-meta p{margin:6px 0 0 0;color:var(--muted);max-width:800px}
+.artist-actions{display:flex;gap:8px;margin-top:10px}
+.artist-actions button{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;transition:transform .12s,filter .12s}
+.artist-actions button:hover{transform:translateY(-2px);filter:brightness(.95)}
+
+/* Modal styles */
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:20000}
+.modal[hidden]{display:none}
+.modal-content{background:#0b1220;padding:18px;border-radius:12px;min-width:320px;max-width:800px}
+.modal-content textarea{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.modal-actions button{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:white}
+
+/* Context menu simple styles */
+.context-item{padding:8px 10px;cursor:pointer}
+.context-item:hover{background:var(--glass)}
+
+/* Responsive */
+@media (max-width:900px){
+  .leftpane{display:none}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+}
