@@ -1,4 +1,4 @@
-# SumoTube
+# SumoTube (Beta)
 
 An **Electron desktop application** to browse and preview local video files with custom thumbnails, artist views, hover previews, random sorting, and pinning support. The app remembers your last chosen folder and preserves pinned videos, custom thumbnails, and artist profiles between sessions.
 
