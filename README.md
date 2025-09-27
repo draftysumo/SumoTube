@@ -1,6 +1,6 @@
-# Drafty's VideoBrowser
+# SumoTube
 
-A Qt-based desktop application to browse and preview local video files with custom thumbnails, hover previews, and pinning support.
+An **Electron desktop application** to browse and preview local video files with custom thumbnails, artist views, hover previews, random sorting, and pinning support. The app remembers your last chosen folder and preserves pinned videos, custom thumbnails, and artist profiles between sessions.
 
 ## Table of Contents
 
@@ -12,57 +12,80 @@ A Qt-based desktop application to browse and preview local video files with cust
 * [Compilation](#compilation)
 
   * [Linux](#linux)
-  * [Windows (MinGW / Qt 6.x)](#windows-mingw--qt-6x)
+  * [Windows](#windows)
 * [Contributing](#contributing)
-* [Installation (Downloading Release)](#installation-downloading-release)
+* [Installation](#installation)
 * [Suggested Repository Structure](#suggested-repository-structure)
+
+---
 
 ## Features
 
-* **Local Video Browsing:** Scan a folder recursively for video files (`.mp4`, `.mkv`, `.avi`, `.mov`) and display them as clickable video cards.
-* **Custom Thumbnails:** Supports custom thumbnail images stored in the same or a separate folder. If no custom thumbnail exists, it generates one from the video automatically.
-* **Hover Previews:** Hovering over a video shows a short frame sequence preview extracted from the video.
-* **Duration Display:** Each video shows its total duration on a pill-style overlay.
-* **Pin Videos:** Pin videos to keep them at the top of the grid. Right-click on a video to pin or unpin.
-* **Home Page** Randomly sorted to mimick an algorithmic home page to rediscover videos.
-* **Search:** Filter videos by title or channel dynamically as you type.
-* **Resizable Layout:** Video grid adjusts to window size with scroll support, keeping consistent spacing between cards.
-* **Open Videos:** Click a video card to open it in the system's default video player.
+* **Local Video Browsing:** Recursively scans folders for video files (`.mp4`, `.mkv`, `.avi`, `.mov`, `.webm`, `.flv`, `.ogg`) and displays them as cards.
+* **Custom Thumbnails:** Supports sidecar images (`.jpg`, `.jpeg`, `.png`, `.webp`) with the same base filename. You can also assign custom thumbnails manually.
+* **Hover Previews:** Hovering over a video thumbnail plays a looping video preview.
+* **Duration Display:** Each video shows its runtime in a rounded pill overlay.
+* **Pin Videos:** Right-click a video to pin or unpin it. Pinned videos always appear at the start of the grid, regardless of sort mode.
+* **Random Home Page:** Default random shuffle to mimic algorithmic rediscovery.
+* **Sorting Options:** Sort by random, title (asc/desc), or artist (asc/desc).
+* **Search:** Filter by video title or artist name in real time.
+* **Artist View:** Navigate into an artist (parent folder) page, set profile pictures, and edit artist bios.
+* **Persistent State:** Last folder, pinned videos, custom thumbnails, and artist bios are saved between sessions.
+* **Resizable Layout:** Responsive grid that adapts to window size.
+* **Open Videos:** Click a card to open the video in your system’s default player.
+* **Minimal Chrome:** Default application menu is removed for a clean look.
+
+---
 
 ## UI Components
 
-* **Top Bar:**
+* **Top Bar**
 
-  * Search bar for filtering videos.
-  * Buttons to change the video folder and refresh the app.
-* **Video Grid:** Displays video cards with thumbnail, title, channel, duration, and pinned state. Scrollable when content exceeds window size.
+  * Search bar for quick filtering.
+  * Sort selector (random, title, artist).
+  * Buttons to change folder or refresh.
+* **Video Grid**
+
+  * Thumbnail, title, artist, duration pill, pin icon.
+  * Hover to preview video.
+  * Click to play.
+* **Artist Sidebar**
+
+  * Lists artists (folders) with video counts.
+  * Click an artist to open their dedicated page.
+* **Artist Page**
+
+  * Large profile picture and bio (editable).
+  * Buttons for setting PFP, editing bio, and going back.
+
+---
 
 ## Notes
 
-* Hover preview and thumbnail generation require **FFmpeg** and **FFprobe** installed on your system (linux).
-* Pinned videos are preserved across sessions using `QSettings`.
-* Space between videos is based on how many videos are loaded into the app, if you only have a few videos the gaps will be really large - thats normal.
+* No external dependencies like FFmpeg are required. Thumbnails and previews are extracted directly via HTML5 video elements.
+* Custom state (pinned videos, bios, thumbnails) is saved in **localStorage** inside Electron.
+* The last opened folder is remembered via `settings.json` in the app’s user data directory.
 
 ---
 
 ## How It Works
 
-1. On first launch, select a video folder.
-2. The app scans the directory recursively for supported video files and thumbnails with the name file name and generates video cards with auto gen thumbnails when custom ones arent avaliable.
-3. Hovering over a video card displays a short multi-frame preview. Frames are generated asynchronously and cached.
-4. Right-click on a video card to pin or unpin it. Pinned videos always appear at the start of the grid.
-5. Search dynamically filters videos by title or channel name.
-6. Click a video card to open the video using your system’s default video player.
-7. Reloading the video folder refreshes all thumbnails and hover previews safely without crashes.
+1. On startup, the app restores the last folder (if available) and rebuilds the video grid.
+2. Videos are scanned recursively, with sidecar thumbnails automatically detected.
+3. Hovering a card plays a short looping preview.
+4. Right-click a card to toggle pin state.
+5. Search bar dynamically filters results by title or artist.
+6. Artists are grouped by parent folder. Selecting one opens their profile page.
+7. Custom thumbnails and artist bios are saved persistently in local storage.
+8. Opening a video launches it with the system’s default video player.
 
 ---
 
 ## Requirements For Building
 
-* Qt 6 or higher
-* C++17 compatible compiler
-* `ffmpeg` and `ffprobe` installed and accessible in system PATH (for thumbnail generation)
-* CMake (for building cross-platform)
+* Node.js (>= 18 recommended)
+* npm or yarn
+* Electron
 
 ---
 
@@ -70,67 +93,40 @@ A Qt-based desktop application to browse and preview local video files with cust
 
 ### Linux
 
-1. Clone the repository:
+```bash
+git clone https://github.com/draftysumo/sumotube.git
+cd sumotube
+npm install
+npm start
+```
+
+To package:
 
 ```bash
-git clone https://github.com/draftysumo/draftys-videobrowser.git
-cd draftys-videobrowser
+npm run dist
 ```
 
-2. Create a build directory and run:
+### Windows
 
-```bash
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
-```
-
-3. Run the application:
-
-```bash
-./Draftys-VideoBrowser
-```
-
-### Windows (MinGW / Qt 6.x)
-
-1. **Install Requirements**
-
-   * Qt 6.x MinGW 64-bit
-   * CMake
-   * FFmpeg (`ffmpeg.exe` and `ffprobe.exe`)
-   * Draftys-VideoBrowser source code
-
-2. **Unzip the source code** .zip file, then **open the Qt MinGW Command Prompt** and navigate (cd) into the **project directory** (c:\users\user\downloads\draftys-videobrowser-v#)
-
-3. **Create Build Directory**
+1. Install Node.js (LTS).
+2. Clone repo and install dependencies:
 
 ```cmd
-mkdir build
-cd build
+git clone https://github.com/draftysumo/sumotube.git
+cd sumotube
+npm install
 ```
 
-4. Configure with CMake:
+3. Run the app:
 
 ```cmd
-cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/mingw_64"
+npm start
 ```
 
-5. Build the project:
+4. Package a build:
 
 ```cmd
-mingw32-make
-```
-
-6. Deploy Qt DLLs:
-
-```cmd
-C:\Qt\6.9.2\mingw_64\bin\windeployqt.exe Draftys-VideoBrowser.exe
-```
-
-7. Include FFmpeg:
-
-```cmd
-Copy ffmpeg.exe and ffprobe.exe into the same folder as VideoBrowserApp.exe, or add them to PATH.
+npm run dist
 ```
 
 ---
@@ -141,46 +137,41 @@ Copy ffmpeg.exe and ffprobe.exe into the same folder as VideoBrowserApp.exe, or 
 2. Create a feature branch:
 
 ```bash
-git checkout -b feature/your-feature
+git checkout -b feature/my-feature
 ```
 
-3. Make changes, commit with clear messages:
+3. Commit and push changes:
 
 ```bash
-git commit -am "Add feature description"
+git commit -m "Add my feature"
+git push origin feature/my-feature
 ```
 
-4. Push to your branch:
-
-```bash
-git push origin feature/your-feature
-```
-
-5. Open a Pull Request to merge your changes into `main`.
+4. Open a Pull Request.
 
 **Guidelines:**
 
-* Use clear, consistent code formatting.
-* Document new functionality in the README.
-* Keep commits atomic and descriptive.
-* Ensure `ffmpeg` commands work on all platforms.
+* Use consistent code style.
+* Document new features in the README.
+* Keep commits small and descriptive.
 
 ---
 
-## Installation (Pre-Built)
+## Installation
 
-[Download Latest Release](https://github.com/draftysumo/draftys-videobrowser/releases)
-
-! Hover preview and thumbnail generation require **FFmpeg** and **FFprobe** installed on your distro (linux).
+Download the latest builds from the [Releases page](https://github.com/draftysumo/sumotube/releases).
 
 ---
 
-### Suggested Repository Structure
+## Suggested Repository Structure
 
 ```
-video-browser/
-├── main.cpp
+sumotube/
+├── main.js
+├── preload.js
+├── renderer.js
+├── index.html
+├── package.json
 ├── README.md
-├── CMakeLists.txt
-└── LICENSE
+└── assets/
 ```
