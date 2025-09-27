@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SumoTube</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top application menu removed intentionally for a minimal UI -->
+
+  <main>
+    <aside class="leftpane">
+      <div class="left-controls">
+        <button id="openFolderSmall" title="Open Folder">📁</button>
+        <button id="refreshBtn" title="Refresh / Rescan">⟳</button>
+        <select id="sortSelect" title="Sort videos">
+          <option value="random">Shuffle (Random)</option>
+          <option value="title-asc">Title A → Z</option>
+          <option value="title-desc">Title Z → A</option>
+          <option value="artist-asc">Artist A → Z</option>
+          <option value="artist-desc">Artist Z → A</option>
+        </select>
+      </div>
+
+      <input id="search" placeholder="Search videos or artists..." />
+
+      <h3>Artists</h3>
+      <ul id="artists"></ul>
+    </aside>
+
+    <section class="gridwrap">
+      <div id="grid" class="grid"></div>
+    </section>
+  </main>
+
+  <template id="card-template">
+    <div class="card" tabindex="0">
+      <div class="thumbwrap">
+        <canvas class="thumb-canvas"></canvas>
+        <img class="thumb-img" alt="thumb" />
+        <video class="preview" muted preload="metadata"></video>
+        <div class="pin-icon" title="Pinned" hidden>📌</div>
+      </div>
+      <div class="meta">
+        <div class="title-row">
+          <div class="title"></div>
+        </div>
+        <div class="artist-line">
+          <img class="artist-pfp" alt="pfp" />
+          <div class="artist-name"></div>
+        </div>
+      </div>
+      <div class="duration-pill"></div>
+    </div>
+  </template>
+
+  <!-- Bio modal -->
+  <div id="bioModal" class="modal" hidden>
+    <div class="modal-content">
+      <h3 id="modalArtistName">Artist</h3>
+      <textarea id="modalBioInput" rows="6" placeholder="Enter bio..."></textarea>
+      <div class="modal-actions">
+        <button id="modalSave">Save</button>
+        <button id="modalCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+  <!-- Startup logic is now handled in renderer.js only -->
+</body>
+</html>
