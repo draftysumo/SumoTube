@@ -1,6 +1,6 @@
-# SumoTube (Beta)
+# SumoTube
 
-An Electron desktop application to browse and preview local video files with custom thumbnails, artist views, hover previews, random sorting, and pinning support.
+A Multi-OS desktop application to browse and preview local video files with custom thumbnails, artist views, hover previews, random sorting, and pinning support.
 
 <img width="1920" height="1032" alt="Screenshot 2025-09-27 055049" src="https://github.com/user-attachments/assets/cc35d3b1-33c3-4d9b-b654-118518b9d35b" /> 
 <img width="1920" height="1032" alt="Screenshot 2025-09-27 055038" src="https://github.com/user-attachments/assets/af7be0ae-0fbd-4e3e-bb68-43dd234cfacd" />
@@ -94,6 +94,8 @@ Download the latest builds from the [Releases page](https://github.com/draftysum
 git clone https://github.com/draftysumo/sumotube.git
 cd sumotube
 npm install
+npm install electron
+npm install electron-store
 ```
 
 To test:
@@ -116,6 +118,8 @@ npm run dist
 git clone https://github.com/draftysumo/sumotube.git
 cd sumotube
 npm install
+npm install electron
+npm install electron-store
 ```
 
 3. Test the app:
