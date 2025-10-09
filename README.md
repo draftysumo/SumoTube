@@ -113,7 +113,7 @@ npm run dist
 
 1. Install Node.js (LTS): https://nodejs.org/en/download
 
-2. Clone repo and install dependencies:
+2. Clone repo and install dependencies (do this in Command Prompt (CMD) NOT PowerShell):
 
 ```cmd
 git clone https://github.com/draftysumo/sumotube.git
