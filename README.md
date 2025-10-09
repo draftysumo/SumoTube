@@ -111,7 +111,8 @@ npm run dist
 
 ### Windows
 
-1. Install Node.js (LTS).
+1. Install Node.js (LTS): https://nodejs.org/en/download
+
 2. Clone repo and install dependencies:
 
 ```cmd
