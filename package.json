@@ -2,16 +2,17 @@
   "name": "sumotube",
   "version": "5.1.0",
   "description": "Cross-OS local YouTube-like video browser",
-"author": {
-  "name": "Drafty Sumo",
-  "email": "draftysumo@outlook.com"
-},
+  "author": {
+    "name": "Drafty Sumo",
+    "email": "draftysumo@outlook.com"
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron . --no-sandbox",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "build-linux": "electron-builder build --linux"
+    "build-linux": "electron-builder build --linux --x64 --arm64",
+    "build-win": "electron-builder build --win --x64 --arm64"
   },
   "build": {
     "appId": "com.draftysumo.SumoTube",
@@ -30,15 +31,15 @@
       "icon": "assets/icon.ico",
       "publish": null
     },
-    "linux": {
-      "target": [
-        "deb",
-        "rpm",
-        "AppImage"
-      ],
-      "icon": "assets/icons",
-      "category": "AudioVideo",
-      "executableName": "SumoTube"
+"linux": {
+  "target": [
+    "deb",
+    "rpm",
+    "AppImage"
+  ],
+  "icon": "assets/icons",
+  "category": "AudioVideo",
+  "executableName": "SumoTube"
     },
     "nsis": {
       "oneClick": false,
