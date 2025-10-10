@@ -82,9 +82,13 @@ Download the latest builds from the [Releases page](https://github.com/draftysum
 ## Requirements For Building
 
 Node.js (>= 20 recommended)
+
 npm
+
 Electron
+
 Linux only: fakeroot, dpkg-dev, rpm (for .deb / .rpm)
+
 Linux only: wine64 (if building Windows .exe on Linux)
 
 ## Compilation
