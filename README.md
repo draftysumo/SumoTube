@@ -1,6 +1,6 @@
 # SumoTube
 
-A Multi-OS desktop application to browse and preview local video files with custom thumbnails, artist views, hover previews, random sorting, and pinning support.
+A Windows/Linux desktop application to browse and preview local video files with custom thumbnails, custom artist' name & pages, hover previews, random sorting, and video pinning. Open any video in your devices default media player just by double clicking the video card inside the app.
 
 <img width="1920" height="1032" alt="Screenshot 2025-09-27 055049" src="https://github.com/user-attachments/assets/cc35d3b1-33c3-4d9b-b654-118518b9d35b" /> 
 <img width="1920" height="1032" alt="Screenshot 2025-09-27 055038" src="https://github.com/user-attachments/assets/af7be0ae-0fbd-4e3e-bb68-43dd234cfacd" />
@@ -89,6 +89,10 @@ Download the latest builds from the [Releases page](https://github.com/draftysum
 ## Compilation
 
 ### Linux
+
+1. Install node.js by running ```sudo apt install nodejs```
+
+2. Clone the repo and install dependencies
 
 ```bash
 git clone https://github.com/draftysumo/sumotube.git
