@@ -81,20 +81,26 @@ Download the latest builds from the [Releases page](https://github.com/draftysum
 
 ## Requirements For Building
 
-* Node.js (>= 18 recommended)
-* npm
-* Electron
-
+Node.js (>= 20 recommended)
+npm
+Electron
+Linux only: fakeroot, dpkg-dev, rpm (for .deb / .rpm)
+Linux only: wine64 (if building Windows .exe on Linux)
 
 ## Compilation
-
 ### Linux
 
-1. Install node.js by running ```sudo apt install nodejs```
+1. Install Node.js:
 
-2. Clone the repo and install dependencies
+```sudo apt install nodejs npm```
 
-```bash
+2. Install Linux build dependencies:
+
+```sudo apt install -y fakeroot dpkg-dev rpm```
+
+3. Clone the repo and install dependencies:
+
+```
 git clone https://github.com/draftysumo/sumotube.git
 cd sumotube
 npm install
@@ -102,24 +108,42 @@ npm install electron
 npm install electron-store
 ```
 
-To test:
-```bash
+4. Test the app:
+
+```
 npm start
 ```
 
-To package:
+5. Package for Linux x86_64 and ARM64:
 
-```bash
-npm run dist
+```
+npm run build-linux
+# or directly:
+npx electron-builder build --linux deb,rpm,AppImage --x64 --arm64
+```
+
+
+This produces:
+
+```
+dist/SumoTube_5.1.0_amd64.deb
+dist/SumoTube_5.1.0_arm64.deb
+dist/SumoTube-5.1.0.x86_64.rpm
+dist/SumoTube-5.1.0.aarch64.rpm
+dist/SumoTube-5.1.0.AppImage
 ```
 
 ### Windows
 
-1. Install Node.js (LTS): https://nodejs.org/en/download
+1. Install Node.js (LTS):
 
-2. Clone repo and install dependencies (do this in Command Prompt (CMD) NOT PowerShell):
+```
+https://nodejs.org/en/download
+```
 
-```cmd
+2. Clone repo and install dependencies (use Command Prompt, not PowerShell):
+
+```
 git clone https://github.com/draftysumo/sumotube.git
 cd sumotube
 npm install
@@ -129,14 +153,25 @@ npm install electron-store
 
 3. Test the app:
 
-```cmd
+```
 npm start
 ```
 
-4. Package a build:
 
-```cmd
-npm run dist
+4. Package Windows installer for x86_64 and ARM64:
+
+```
+npm run build-windows
+# or directly:
+npx electron-builder build --win nsis --x64 --arm64
+```
+
+
+This produces:
+
+```
+dist/SumoTube Setup 5.1.0.exe (x64)
+dist/SumoTube Setup 5.1.0.exe (ARM64)
 ```
 
 ---
