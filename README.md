@@ -126,11 +126,11 @@ npx electron-builder build --linux deb,rpm,AppImage --x64 --arm64
 This produces:
 
 ```
-dist/SumoTube_5.1.0_amd64.deb
-dist/SumoTube_5.1.0_arm64.deb
-dist/SumoTube-5.1.0.x86_64.rpm
-dist/SumoTube-5.1.0.aarch64.rpm
-dist/SumoTube-5.1.0.AppImage
+dist/SumoTube_X.X.X_amd64.deb
+dist/SumoTube_X.X.X_arm64.deb
+dist/SumoTube-X.X.X.x86_64.rpm
+dist/SumoTube-X.X.X.aarch64.rpm
+dist/SumoTube-X.X.X.AppImage
 ```
 
 ### Windows
@@ -170,8 +170,8 @@ npx electron-builder build --win nsis --x64 --arm64
 This produces:
 
 ```
-dist/SumoTube Setup 5.1.0.exe (x64)
-dist/SumoTube Setup 5.1.0.exe (ARM64)
+dist/SumoTube Setup X.X.X.exe (x64)
+dist/SumoTube Setup X.X.X.exe (ARM64)
 ```
 
 ---
