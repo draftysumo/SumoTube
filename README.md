@@ -204,12 +204,15 @@ git push origin feature/my-feature
 
 ```
 sumotube/
+├── node_modules
 ├── main.js
 ├── preload.js
 ├── renderer.js
 ├── index.html
 ├── package.json
+├── package-lock.json
 ├── README.md
+├── styles.css
 └── assets/
 ```
 ---
