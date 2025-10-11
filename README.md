@@ -35,6 +35,7 @@ A Windows/Linux desktop application to browse and preview local video files with
 * **Resizable Layout:** Responsive grid that adapts to window size.
 * **Open Videos:** Click a card to open the video in your system’s default player.
 * **Minimal Chrome:** Default application menu is removed for a clean look.
+* **Controller Support:** Navigate the grid ui with a controller when you are away from your mouse.
 
 ---
 
