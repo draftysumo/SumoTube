@@ -82,26 +82,26 @@ Download the latest builds from the [Releases page](https://github.com/draftysum
 
 ## Requirements For Building
 
-Node.js (>= 20 recommended)
-
-npm
-
-Electron
-
-Linux only: fakeroot, dpkg-dev, rpm (for .deb / .rpm)
-
-Linux only: wine64 (if building Windows .exe on Linux)
+- Node.js (>= 20 recommended)
+- npm
+- Electron
+- Linux only: fakeroot, dpkg-dev, rpm (for .deb / .rpm)
+- Linux only: wine64 (if building Windows .exe on Linux)
 
 ## Compilation
 ### Linux
 
 1. Install Node.js:
 
-```sudo apt install nodejs npm```
+```
+sudo apt install nodejs npm
+```
 
 2. Install Linux build dependencies:
 
-```sudo apt install -y fakeroot dpkg-dev rpm```
+```
+sudo apt install -y fakeroot dpkg-dev rpm
+```
 
 3. Clone the repo and install dependencies:
 
@@ -140,11 +140,7 @@ dist/SumoTube-X.X.X.AppImage
 
 ### Windows
 
-1. Install Node.js (LTS):
-
-```
-https://nodejs.org/en/download
-```
+1. Install Node.js (LTS): ```https://nodejs.org/en/download```
 
 2. Clone repo and install dependencies (use Command Prompt, not PowerShell):
 
