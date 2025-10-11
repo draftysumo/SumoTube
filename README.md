@@ -1,3 +1,5 @@
+<img width="200" height="200" alt="icon" src="https://github.com/user-attachments/assets/4487686f-469a-4ab8-af46-554f94c43bd9" />
+
 # SumoTube
 
 A Windows/Linux desktop application to browse and preview local video files with custom thumbnails, custom artist' name & pages, hover previews, random sorting, and video pinning. Open any video in your devices default media player just by double clicking the video card inside the app.
