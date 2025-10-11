@@ -20,7 +20,6 @@
     "files": [
       "**/*",
       "assets/icons/**/*"
-
     ],
     "directories": {
       "buildResources": "assets"
@@ -30,18 +29,18 @@
         "nsis",
         "portable"
       ],
-      "icon": "assets/icon.ico",
+      "icon": "assets/icons/icon.ico",
       "publish": null
     },
-"linux": {
-  "target": [
-    "deb",
-    "rpm",
-    "AppImage"
-  ],
-  "icon": "assets/icons",
-  "category": "AudioVideo",
-  "executableName": "SumoTube"
+    "linux": {
+      "target": [
+        "deb",
+        "rpm",
+        "AppImage"
+      ],
+      "icon": "assets/icons/icon.png",
+      "category": "AudioVideo",
+      "executableName": "SumoTube"
     },
     "nsis": {
       "oneClick": false,
