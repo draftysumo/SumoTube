@@ -91,7 +91,7 @@ Download the latest builds from the [Releases page](https://github.com/draftysum
 ## Compilation
 ### Linux
 
-1. Install Node.js:
+1. Install Node.js & npm:
 
 ```
 sudo apt install nodejs npm
