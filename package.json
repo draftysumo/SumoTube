@@ -18,7 +18,9 @@
     "appId": "com.draftysumo.SumoTube",
     "productName": "SumoTube",
     "files": [
-      "**/*"
+      "**/*",
+      "assets/icons/**/*"
+
     ],
     "directories": {
       "buildResources": "assets"
