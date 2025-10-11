@@ -2,8 +2,9 @@
 
 A Windows/Linux desktop application to browse and preview local video files with custom thumbnails, custom artist' name & pages, hover previews, random sorting, and video pinning. Open any video in your devices default media player just by double clicking the video card inside the app.
 
-<img width="1920" height="1032" alt="Screenshot from 2025-10-10 19-08-14" src="https://github.com/user-attachments/assets/0e6701f6-f822-4340-869a-10ba1bacf3d5" />
-<img width="1920" height="1032" alt="Screenshot from 2025-10-10 19-07-40" src="https://github.com/user-attachments/assets/3d343be8-dfb0-4236-ac53-16c37125614e" />
+<img width="1920" height="1032" alt="Screenshot from 2025-10-11 12-02-38" src="https://github.com/user-attachments/assets/b79323c7-e935-4e22-8699-5c0ffa2cf3e5" />
+<img width="1920" height="1032" alt="Screenshot from 2025-10-11 12-03-04" src="https://github.com/user-attachments/assets/88c0e6da-0041-4682-90a3-178fbbe7ce9c" />
+
 
 
 ## Table of Contents
