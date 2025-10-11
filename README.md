@@ -166,7 +166,7 @@ npm start
 4. Package Windows installer for x86_64 and ARM64:
 
 ```
-npm run build-windows
+npm run build-win
 # or directly:
 npx electron-builder build --win nsis --x64 --arm64
 ```
