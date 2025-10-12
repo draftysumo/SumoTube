@@ -1,13 +1,25 @@
-<img width="200" height="200" alt="icon" src="https://github.com/user-attachments/assets/4487686f-469a-4ab8-af46-554f94c43bd9" />
+<div align="center">
+
+<img src="https://github.com/user-attachments/assets/4487686f-469a-4ab8-af46-554f94c43bd9" width="220" height="220" alt="SumoTube Icon" />
 
 # SumoTube
 
-A Windows/Linux desktop application to browse and preview local video files with custom thumbnails, custom artist' name & pages, hover previews, random sorting, and video pinning. Open any video in your devices default media player just by double clicking the video card inside the app.
+**A sleek, offline video browser for Windows & Linux.**  
+Browse and preview your local videos with hover previews, artist pages, custom thumbnails, and pinning — all in a clean, minimal UI.
+
+[![Downloads](https://img.shields.io/github/downloads/draftysumo/SumoTube/total?style=for-the-badge&color=4CAF50)](https://github.com/draftysumo/SumoTube/releases)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue?style=for-the-badge)](#)
+![Built with Electron](https://img.shields.io/badge/Built%20With-Electron-gray?style=for-the-badge&logo=electron)
+[![License](https://img.shields.io/github/license/draftysumo/SumoTube?style=for-the-badge&color=orange)](LICENSE)
+
+### [Install](https://github.com/draftysumo/sumotube/releases)
+
+---
 
 <img width="1920" height="1032" alt="Screenshot from 2025-10-11 12-02-38" src="https://github.com/user-attachments/assets/b79323c7-e935-4e22-8699-5c0ffa2cf3e5" />
 <img width="1920" height="1032" alt="Screenshot from 2025-10-11 12-03-04" src="https://github.com/user-attachments/assets/88c0e6da-0041-4682-90a3-178fbbe7ce9c" />
 
-
+</div>
 
 ## Table of Contents
 
@@ -77,9 +89,9 @@ A Windows/Linux desktop application to browse and preview local video files with
 
 ---
 
-## Installation
+## Download
 
-Download the latest builds from the [Releases page](https://github.com/draftysumo/sumotube/releases).
+Download the latest version from the [Releases page](https://github.com/draftysumo/sumotube/releases).
 
 ---
 
