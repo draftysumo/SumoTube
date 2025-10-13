@@ -189,8 +189,9 @@ npx electron-builder build --win nsis --x64 --arm64
 This produces:
 
 ```
-dist/SumoTube Setup X.X.X.exe (x64)
-dist/SumoTube Setup X.X.X.exe (ARM64)
+dist/SumoTube-Setup-X.X.X-arm64.exe
+dist/SumoTube-Setup-X.X.X-x64.exe
+dist/SumoTube-Setup-X.X.X.exe (delete this one, its identical to the x64 version)
 ```
 
 ---
