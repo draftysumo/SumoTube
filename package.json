@@ -12,7 +12,7 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "build-linux": "electron-builder build --linux --x64 --arm64",
-    "build-win": "electron-builder build --win --x64 --arm64"
+    "build-win": "electron-builder build --win nsis --x64 --arm64 --publish never"
   },
   "build": {
     "appId": "com.draftysumo.SumoTube",
@@ -22,15 +22,26 @@
       "assets/icons/**/*"
     ],
     "directories": {
-      "buildResources": "assets"
+      "buildResources": "assets",
+      "output": "dist"
     },
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        {
+          "target": "nsis",
+          "arch": ["x64", "arm64"]
+        }
       ],
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
       "icon": "assets/icons/icon.ico",
+      "publisherName": "Drafty Sumo",
       "publish": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": true
     },
     "linux": {
       "target": [
@@ -41,12 +52,6 @@
       "icon": "assets/icons/icon.png",
       "category": "AudioVideo",
       "executableName": "SumoTube"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "runAfterFinish": true
     }
   },
   "devDependencies": {
