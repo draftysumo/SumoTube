@@ -219,7 +219,7 @@ git push origin feature/my-feature
 * Use consistent code style.
 * Document new features in the README.
 * Keep commits small and descriptive.
-* Follow the GenAI use [guidelines](#transparent-genai-use-summary) the app follows.
+* Follow the GenAI use [guidelines](#transparent-genai-use-summary/guidelines) the app follows.
 
 ## Suggested Repository Structure
 
