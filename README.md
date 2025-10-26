@@ -150,7 +150,7 @@ npx electron-builder build --linux deb,rpm,AppImage --x64 --arm64
 
 1. Install Node.js (LTS): ```https://nodejs.org/en/download```
 
-2. Clone repo and install dependencies (use Command Prompt, not PowerShell):
+2. Clone repo and install dependencies (use Command Prompt as Admin, not PowerShell):
 
 ```
 git clone https://github.com/draftysumo/sumotube.git
