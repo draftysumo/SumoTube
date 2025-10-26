@@ -63,3 +63,29 @@ main{display:flex;height:100vh}
   .leftpane{display:none}
   .grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
 }
+
+/* --- Playlist & sidebar tweaks --- */
+
+/* container for playlists section inside leftpane */
+.sidebar-section{margin-bottom:12px}
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px 0;color:var(--muted);font-size:15px}
+.section-header button{
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  padding:4px 8px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+  transition:background .12s,transform .09s;
+}
+.section-header button:hover{background:var(--glass);transform:translateY(-2px)}
+
+/* playlists list style similar to artists, but slightly smaller */
+#playlists{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+#playlists li{padding:8px;border-radius:8px;cursor:pointer;background:transparent;transition:background .12s,transform .08s;will-change:transform;color:var(--muted);font-size:13px}
+#playlists li:hover{background:var(--glass);transform:translateX(6px)}
+
+/* context menu default styling adjustments (slightly nicer) */
+.context-menu{font-family:inherit;color:var(--muted)}

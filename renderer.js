@@ -8,12 +8,24 @@
   const grid = document.getElementById('grid');
   const search = document.getElementById('search');
   const artistsEl = document.getElementById('artists');
+  const playlistsEl = document.getElementById('playlists');
+  const addPlaylistBtn = document.getElementById('addPlaylistBtn');
   const template = document.getElementById('card-template');
   const bioModal = document.getElementById('bioModal');
   const modalArtistName = document.getElementById('modalArtistName');
   const modalBioInput = document.getElementById('modalBioInput');
   const modalSave = document.getElementById('modalSave');
   const modalCancel = document.getElementById('modalCancel');
+
+  // Playlist modal elements
+  const playlistModal = document.getElementById('playlistModal');
+  const playlistModalTitle = document.getElementById('playlistModalTitle');
+  const playlistNameInput = document.getElementById('playlistNameInput');
+  const playlistDescInput = document.getElementById('playlistDescInput');
+  const playlistSelectThumb = document.getElementById('playlistSelectThumb');
+  const playlistThumbPreview = document.getElementById('playlistThumbPreview');
+  const playlistSave = document.getElementById('playlistSave');
+  const playlistCancel = document.getElementById('playlistCancel');
 
   // small placeholder SVG for artists without pfp
   const PLACEHOLDER_PFP = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><rect fill="#0b1220" width="24" height="24" rx="4"/><g fill="#9aa4b2"><circle cx="12" cy="8" r="3"/><path d="M4 20c0-3.3 2.7-6 6-6h4c3.3 0 6 2.7 6 6v.5H4V20z"/></g></svg>`);
@@ -22,7 +34,8 @@
   let videos = [];
   let pinned = new Set();
   let artistProfiles = {};
-  let customThumbs = {}; 
+  let customThumbs = {};
+  let playlists = []; // each: { id, name, description, pfp, videos: [path] }
   let currentView = { type: 'grid' };
   let editingArtist = null;
   let currentFolder = null;
@@ -40,11 +53,12 @@
       if(parsed.pinned && Array.isArray(parsed.pinned)) pinned = new Set(parsed.pinned);
       artistProfiles = parsed.artistProfiles || {};
       customThumbs = parsed.customThumbs || {};
+      playlists = parsed.playlists || [];
     }catch(e){console.warn('Failed to load state',e)}
   }
 
   function saveState(){
-    const payload = { pinned: Array.from(pinned), artistProfiles, customThumbs };
+    const payload = { pinned: Array.from(pinned), artistProfiles, customThumbs, playlists };
     try{ localStorage.setItem('video_browser_state', JSON.stringify(payload)); }catch(e){console.warn('Failed to save state',e)}
   }
 
@@ -103,6 +117,113 @@
     editingArtist=null;
   });
 
+  // Playlist helpers
+  function generateId(){ return 'pl-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); }
+  function getPlaylistById(id){ return playlists.find(p=>p.id===id); }
+  function isVideoInAnyPlaylist(path){ return playlists.some(p=>p.videos && p.videos.includes(path)); }
+  function countPlaylistsContaining(path){ return playlists.reduce((acc,p)=> acc + ((p.videos||[]).includes(path)?1:0), 0); }
+  function addVideoToPlaylist(id, path){ const p=getPlaylistById(id); if(!p) return; p.videos = p.videos || []; if(!p.videos.includes(path)) p.videos.push(path); saveState(); }
+  function removeVideoFromPlaylist(id, path){ const p=getPlaylistById(id); if(!p) return; p.videos = p.videos || []; const idx = p.videos.indexOf(path); if(idx!==-1) p.videos.splice(idx,1); saveState(); }
+  function createPlaylist(opts={name:'New playlist', description:'', pfp:null, initialVideo:null}){
+    const id = generateId();
+    const pl = { id, name:opts.name||'New playlist', description:opts.description||'', pfp:opts.pfp||null, videos:[] };
+    if(opts.initialVideo) pl.videos.push(opts.initialVideo);
+    playlists.push(pl);
+    saveState();
+    return pl;
+  }
+  function deletePlaylist(id){
+    const idx = playlists.findIndex(p=>p.id===id);
+    if(idx!==-1){ playlists.splice(idx,1); saveState(); }
+  }
+  function updatePlaylist(id, updates){
+    const p = getPlaylistById(id);
+    if(!p) return;
+    Object.assign(p, updates);
+    saveState();
+  }
+
+  // Playlist modal open helpers
+  let playlistModalMode = null; // 'create' or 'edit'
+  let playlistModalEditingId = null;
+  function openPlaylistModalForCreate(initialVideo){
+    playlistModalMode = 'create';
+    playlistModalEditingId = null;
+    playlistModalTitle.textContent = 'New Playlist';
+    playlistNameInput.value = '';
+    playlistDescInput.value = '';
+    playlistThumbPreview.style.display = 'none';
+    playlistThumbPreview.src = '';
+    playlistModal.removeAttribute('hidden');
+    playlistNameInput.focus();
+    playlistModal.dataset.initialVideo = initialVideo || '';
+  }
+  function openPlaylistModalForEdit(id){
+    const pl = getPlaylistById(id);
+    if(!pl) return;
+    playlistModalMode = 'edit';
+    playlistModalEditingId = id;
+    playlistModalTitle.textContent = 'Edit Playlist';
+    playlistNameInput.value = pl.name || '';
+    playlistDescInput.value = pl.description || '';
+    if(pl.pfp){
+      playlistThumbPreview.src = fileUrl(pl.pfp);
+      playlistThumbPreview.style.display = 'block';
+    } else {
+      playlistThumbPreview.style.display = 'none';
+      playlistThumbPreview.src = '';
+    }
+    playlistModal.removeAttribute('hidden');
+    playlistNameInput.focus();
+  }
+
+  playlistCancel.addEventListener('click', ()=>{ playlistModal.setAttribute('hidden',''); playlistModalMode=null; playlistModalEditingId=null; delete playlistModal.dataset.initialVideo; });
+  playlistSelectThumb.addEventListener('click', async ()=>{
+    try{
+      const f = await window.electronAPI.selectThumbnail();
+      if(f){
+        playlistThumbPreview.src = fileUrl(f);
+        playlistThumbPreview.style.display = 'block';
+        // store temporarily in dataset so save can use it
+        playlistModal.dataset.selectedThumb = f;
+      }
+    }catch(e){ console.warn('select playlist thumb failed', e); }
+  });
+
+  playlistSave.addEventListener('click', ()=>{
+    const name = (playlistNameInput.value || '').trim();
+    const desc = (playlistDescInput.value || '').trim();
+    const tempThumb = playlistModal.dataset.selectedThumb || null;
+
+    if(!name){
+      alert('Please enter a playlist name.');
+      return;
+    }
+
+    if(playlistModalMode === 'create'){
+      const initialVideo = playlistModal.dataset.initialVideo || null;
+      const pl = createPlaylist({ name, description: desc, pfp: tempThumb, initialVideo: initialVideo || null });
+      playlistModal.setAttribute('hidden','');
+      playlistModalMode=null;
+      playlistModalEditingId=null;
+      delete playlistModal.dataset.initialVideo;
+      delete playlistModal.dataset.selectedThumb;
+      renderCurrentView();
+    } else if(playlistModalMode === 'edit' && playlistModalEditingId){
+      updatePlaylist(playlistModalEditingId, {
+        name,
+        description: desc,
+        pfp: tempThumb || getPlaylistById(playlistModalEditingId).pfp || null
+      });
+      playlistModal.setAttribute('hidden','')
+      playlistModalMode=null;
+      playlistModalEditingId=null;
+      delete playlistModal.dataset.selectedThumb;
+      renderCurrentView();
+    }
+  });
+
+  // Apply sort
   function applySort(list){
     const s = sortSelect?.value || 'random';
     const pinnedList = list.filter(v=>pinned.has(v.path));
@@ -197,8 +318,44 @@
 
   sortSelect?.addEventListener('change', ()=> render());
   search?.addEventListener('input', ()=> render());
+  addPlaylistBtn?.addEventListener('click', ()=> openPlaylistModalForCreate(null));
 
   // Renders
+  function buildPlaylists(){
+    if(!playlistsEl) return;
+    playlistsEl.innerHTML='';
+    for(const p of playlists){
+      const li=document.createElement('li');
+      li.textContent=`${p.name} (${(p.videos||[]).length})`;
+      li.onclick=()=>{ currentView={type:'playlist',id:p.id}; render(); };
+      li.addEventListener('mouseenter', ()=> li.style.background='rgba(255,255,255,0.03)');
+      li.addEventListener('mouseleave', ()=> li.style.background='transparent');
+
+      // small right-click menu to delete or edit playlist
+      li.addEventListener('contextmenu', (e)=>{
+        e.preventDefault();
+        const existing=document.querySelector('.context-menu');
+        if(existing) existing.remove();
+        const menu=document.createElement('div'); menu.className='context-menu';
+        menu.style.position='fixed'; menu.style.top=`${e.clientY}px`; menu.style.left=`${e.clientX}px`;
+        menu.style.background='#222'; menu.style.padding='6px'; menu.style.borderRadius='8px'; menu.style.boxShadow='0 8px 30px rgba(0,0,0,0.5)'; menu.style.zIndex='10000';
+
+        const edit=document.createElement('div'); edit.className='context-item'; edit.textContent='Edit playlist';
+        edit.onclick=()=>{ openPlaylistModalForEdit(p.id); menu.remove(); };
+        menu.appendChild(edit);
+
+        const del=document.createElement('div'); del.className='context-item'; del.textContent='Delete playlist';
+        del.onclick=()=>{ if(confirm(`Delete playlist "${p.name}"?`)){ deletePlaylist(p.id); render(); } menu.remove(); };
+        menu.appendChild(del);
+
+        document.body.appendChild(menu);
+        document.addEventListener('click', ()=> menu.remove(), { once: true });
+      });
+
+      playlistsEl.appendChild(li);
+    }
+  }
+
   function buildArtists(){
     const map=new Map();
     for(const v of videos){
@@ -221,6 +378,7 @@
     currentView={type:'grid'};
     grid.innerHTML='';
     buildArtists();
+    buildPlaylists();
     visibleCards=[]; selectedIndex=-1;
     const q=(search?.value||'').trim().toLowerCase();
     let filtered=videos.filter(v=> !q || v.title.toLowerCase().includes(q) || (v.parent||'').toLowerCase().includes(q));
@@ -266,6 +424,57 @@
     listWrap.style.marginTop='18px';
 
     const filtered=videos.filter(v=>v.parent===artist);
+    applySort(filtered);
+    for(const v of filtered){ const cardEl=createCardElement(v); listWrap.appendChild(cardEl); }
+
+    container.appendChild(listWrap);
+    grid.appendChild(container);
+  }
+
+  function renderPlaylist(playlistId){
+    const pl = getPlaylistById(playlistId);
+    if(!pl) return renderGrid();
+    currentView={type:'playlist',id:playlistId};
+    grid.innerHTML='';
+    visibleCards=[]; selectedIndex=-1;
+
+    const container=document.createElement('div');
+    const header=document.createElement('div'); header.className='artist-header';
+
+    const pfp=document.createElement('img'); pfp.className='big-pfp';
+    pfp.src=fileUrl(pl.pfp)||PLACEHOLDER_PFP;
+    header.appendChild(pfp);
+
+    const meta=document.createElement('div'); meta.className='artist-meta';
+    const titleEl=document.createElement('h1'); titleEl.textContent=pl.name; meta.appendChild(titleEl);
+    const bio=document.createElement('p'); bio.textContent=pl.description||'No description yet.'; meta.appendChild(bio);
+
+    const actions=document.createElement('div'); actions.className='artist-actions';
+    const setPfpBtn=document.createElement('button'); setPfpBtn.textContent='Set Picture';
+    setPfpBtn.onclick=async ()=>{
+      const f = await window.electronAPI.selectThumbnail();
+      if(f){ pl.pfp=f; pfp.src=fileUrl(f); saveState(); render(); }
+    };
+    actions.appendChild(setPfpBtn);
+
+    const editDescBtn=document.createElement('button'); editDescBtn.textContent='Edit Description';
+    editDescBtn.addEventListener('click', ()=>{
+      // open playlist modal in edit mode
+      openPlaylistModalForEdit(pl.id);
+    });
+    actions.appendChild(editDescBtn);
+
+    const back=document.createElement('button'); back.textContent='← Back'; back.onclick=()=> renderGrid(); actions.appendChild(back);
+
+    meta.appendChild(actions); header.appendChild(meta); container.appendChild(header);
+
+    const listWrap=document.createElement('div');
+    listWrap.style.display='grid';
+    listWrap.style.gridTemplateColumns='repeat(auto-fill,minmax(320px,1fr))';
+    listWrap.style.gap='12px';
+    listWrap.style.marginTop='18px';
+
+    const filtered = (pl.videos||[]).map(pv=> videos.find(v=>v.path===pv)).filter(Boolean);
     applySort(filtered);
     for(const v of filtered){ const cardEl=createCardElement(v); listWrap.appendChild(cardEl); }
 
@@ -319,28 +528,184 @@
     card.addEventListener('dblclick', ()=> window.electronAPI.openFile(v.path).catch(err=>console.warn('openFile failed',err)));
 
     card.addEventListener('contextmenu', async (e)=>{
-      e.preventDefault(); const existing=document.querySelector('.context-menu'); if(existing) existing.remove();
-      const menu=document.createElement('div'); menu.className='context-menu';
-      menu.style.position='fixed'; menu.style.top=`${e.clientY}px`; menu.style.left=`${e.clientX}px`;
-      menu.style.background='#222'; menu.style.padding='6px'; menu.style.borderRadius='8px'; menu.style.boxShadow='0 8px 30px rgba(0,0,0,0.5)'; menu.style.zIndex='10000';
+  e.preventDefault();
+  const existing = document.querySelector('.context-menu');
+  if (existing) existing.remove();
 
-      const pinOption=document.createElement('div'); pinOption.className='context-item'; pinOption.textContent=pinned.has(v.path)?'Unpin from top':'Pin to top';
-      pinOption.onclick=()=>{ if(pinned.has(v.path)) pinned.delete(v.path); else pinned.add(v.path); saveState(); renderCurrentView(); menu.remove(); };
-      menu.appendChild(pinOption);
+  // Create main context menu
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+  Object.assign(menu.style, {
+    position: 'fixed',
+    top: `${e.clientY}px`,
+    left: `${e.clientX}px`,
+    background: '#222',
+    padding: '6px',
+    borderRadius: '8px',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+    zIndex: '10000',
+    whiteSpace: 'nowrap',
+    minWidth: '180px',
+  });
 
-      const playOption=document.createElement('div'); playOption.className='context-item'; playOption.textContent='Open with system player';
-      playOption.onclick=()=>{ window.electronAPI.openFile(v.path); menu.remove(); }; menu.appendChild(playOption);
-
-      const thumbOption=document.createElement('div'); thumbOption.className='context-item'; thumbOption.textContent='Set Custom Thumbnail';
-      thumbOption.onclick=async ()=>{ const file=await window.electronAPI.selectThumbnail(); if(file){ v.customThumbnail=file; customThumbs[v.path]=file; saveState(); renderCurrentView(); } menu.remove(); };
-      menu.appendChild(thumbOption);
-
-      const removeThumb=document.createElement('div'); removeThumb.className='context-item'; removeThumb.textContent='Remove Custom Thumbnail';
-      removeThumb.onclick=()=>{ if(customThumbs[v.path]) delete customThumbs[v.path]; if(v.customThumbnail) delete v.customThumbnail; saveState(); renderCurrentView(); menu.remove(); };
-      menu.appendChild(removeThumb);
-
-      document.body.appendChild(menu); document.addEventListener('click', ()=> menu.remove(), { once: true });
+  const makeItem = (text, onClick, cursor='pointer') => {
+    const item = document.createElement('div');
+    item.className = 'context-item';
+    item.textContent = text;
+    Object.assign(item.style, {
+      padding: '6px 10px',
+      cursor,
     });
+    item.addEventListener('mouseenter', ()=> item.style.background = 'rgba(255,255,255,0.04)');
+    item.addEventListener('mouseleave', ()=> item.style.background = 'transparent');
+    item.addEventListener('click', (ev)=> {
+      ev.stopPropagation();
+      try { onClick(ev); } catch(err) { console.warn(err); }
+    });
+    return item;
+  };
+
+  // --- options ---
+  const pinOption = makeItem(pinned.has(v.path) ? 'Unpin from top' : 'Pin to top', ()=>{
+    if(pinned.has(v.path)) pinned.delete(v.path); else pinned.add(v.path);
+    saveState();
+    renderCurrentView();
+    cleanup();
+  });
+  menu.appendChild(pinOption);
+
+  const playOption = makeItem('Open with system player', ()=>{
+    window.electronAPI.openFile(v.path);
+    cleanup();
+  });
+  menu.appendChild(playOption);
+
+  const thumbOption = makeItem('Set Custom Thumbnail', async ()=>{
+    const file = await window.electronAPI.selectThumbnail();
+    if(file){ v.customThumbnail = file; customThumbs[v.path] = file; saveState(); renderCurrentView(); }
+    cleanup();
+  });
+  menu.appendChild(thumbOption);
+
+  const removeThumb = makeItem('Remove Custom Thumbnail', ()=>{
+    if(customThumbs[v.path]) delete customThumbs[v.path];
+    if(v.customThumbnail) delete v.customThumbnail;
+    saveState();
+    renderCurrentView();
+    cleanup();
+  });
+  menu.appendChild(removeThumb);
+
+  // --- Add to Playlist (submenu) ---
+  const addToPl = makeItem('Add to playlist ▶', ()=>{}, 'default');
+  menu.appendChild(addToPl);
+
+  // Create submenu
+  const submenu = document.createElement('div');
+  submenu.className = 'context-submenu';
+  Object.assign(submenu.style, {
+    position: 'fixed',
+    background: '#222',
+    padding: '6px',
+    borderRadius: '8px',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+    whiteSpace: 'nowrap',
+    zIndex: '10001',
+    minWidth: '180px',
+    display: 'none',
+  });
+
+  const populateSubmenu = ()=>{
+    submenu.innerHTML = '';
+    if(playlists.length === 0){
+      const noneEl = makeItem('(no playlists)', ()=>{}, 'default');
+      submenu.appendChild(noneEl);
+    } else {
+      for(const p of playlists){
+        const inPl = (p.videos||[]).includes(v.path);
+        const item = makeItem(`${inPl ? '✓ ' : ''}${p.name} (${(p.videos||[]).length})`, ()=>{
+          if(inPl) removeVideoFromPlaylist(p.id, v.path);
+          else addVideoToPlaylist(p.id, v.path);
+          saveState();
+          renderCurrentView();
+          cleanup();
+        });
+        submenu.appendChild(item);
+      }
+    }
+
+    const newPlItem = makeItem('Create new playlist...', ()=>{
+      openPlaylistModalForCreate(v.path);
+      cleanup();
+    });
+    submenu.appendChild(newPlItem);
+  };
+
+  populateSubmenu();
+  document.body.appendChild(menu);
+  document.body.appendChild(submenu);
+
+  // --- submenu hover logic ---
+  let hideTimeout = null;
+  const clearHide = ()=> { if(hideTimeout){ clearTimeout(hideTimeout); hideTimeout = null; } };
+
+  const showSubmenu = ()=>{
+    clearHide();
+    submenu.style.display = 'block';
+    submenu.style.visibility = 'hidden';
+
+    const parentRect = addToPl.getBoundingClientRect();
+    const submenuRect = submenu.getBoundingClientRect();
+
+    let left = parentRect.right + 6;
+    let top = parentRect.top;
+
+    if(left + submenuRect.width > window.innerWidth - 8){
+      left = parentRect.left - submenuRect.width - 6;
+    }
+    if(top + submenuRect.height > window.innerHeight - 8){
+      top = Math.max(8, window.innerHeight - submenuRect.height - 8);
+    }
+    if(top < 8) top = 8;
+
+    submenu.style.left = `${Math.round(left)}px`;
+    submenu.style.top = `${Math.round(top)}px`;
+    submenu.style.visibility = 'visible';
+  };
+
+  const scheduleHide = ()=>{
+    clearHide();
+    hideTimeout = setTimeout(()=> submenu.style.display = 'none', 180);
+  };
+
+  addToPl.addEventListener('mouseenter', showSubmenu);
+  addToPl.addEventListener('mouseleave', scheduleHide);
+  submenu.addEventListener('mouseenter', ()=>{ clearHide(); submenu.style.display = 'block'; });
+  submenu.addEventListener('mouseleave', scheduleHide);
+
+  // --- cleanup ---
+  const cleanup = ()=>{
+    clearHide();
+    if(submenu && submenu.parentNode) submenu.remove();
+    if(menu && menu.parentNode) menu.remove();
+    document.removeEventListener('click', clickHandler);
+    window.removeEventListener('resize', cleanup);
+    window.removeEventListener('scroll', cleanup);
+  };
+
+  const clickHandler = (ev)=>{
+    if(!menu.contains(ev.target) && !submenu.contains(ev.target)) cleanup();
+  };
+  document.addEventListener('click', clickHandler);
+  window.addEventListener('resize', cleanup);
+  window.addEventListener('scroll', cleanup);
+
+});
+
+
+visibleCards.push({ el: card, path: v.path });
+return card;
+
 
     visibleCards.push({el:card,path:v.path});
     return card;
@@ -351,6 +716,7 @@
   function renderCurrentView(){
     if(currentView.type==='grid') renderGrid();
     else if(currentView.type==='artist') renderArtist(currentView.name);
+    else if(currentView.type==='playlist') renderPlaylist(currentView.id);
   }
 
   function selectCardByPath(p){

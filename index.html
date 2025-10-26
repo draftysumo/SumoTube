@@ -25,6 +25,11 @@
 
       <input id="search" placeholder="Search videos or artists..." />
 
+      <div class="sidebar-section">
+        <h3 class="section-header">Playlists <button id="addPlaylistBtn" title="New playlist">＋</button></h3>
+        <ul id="playlists"></ul>
+      </div>
+
       <h3>Artists</h3>
       <ul id="artists"></ul>
     </aside>
@@ -63,6 +68,23 @@
       <div class="modal-actions">
         <button id="modalSave">Save</button>
         <button id="modalCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Playlist modal -->
+  <div id="playlistModal" class="modal" hidden>
+    <div class="modal-content">
+      <h3 id="playlistModalTitle">New Playlist</h3>
+      <input id="playlistNameInput" placeholder="Playlist name" />
+      <textarea id="playlistDescInput" rows="4" placeholder="Description (optional)"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <button id="playlistSelectThumb">Select Picture</button>
+        <img id="playlistThumbPreview" alt="preview" style="width:64px;height:64px;border-radius:6px;object-fit:cover;display:none" />
+      </div>
+      <div class="modal-actions">
+        <button id="playlistSave">Save</button>
+        <button id="playlistCancel">Cancel</button>
       </div>
     </div>
   </div>
