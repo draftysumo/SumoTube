@@ -493,7 +493,6 @@
     const pill=frag.querySelector('.duration-pill');
     const artistPfp=frag.querySelector('.artist-pfp');
     const pinIcon=frag.querySelector('.pin-icon');
-    const playlistBadge = frag.querySelector('.playlist-badge');
 
     card.dataset.path=v.path; card.tabIndex=0;
     card.addEventListener('mouseenter', ()=> card.style.boxShadow='0 12px 36px rgba(2,6,23,0.7)');
@@ -504,11 +503,6 @@
     artistPfp.src=fileUrl(artistProfiles[v.parent]?.pfp)||PLACEHOLDER_PFP;
 
     pinIcon.hidden = !pinned.has(v.path);
-
-    // playlist badge -- show count if in >1 playlists
-    const plCount = countPlaylistsContaining(v.path);
-    if(plCount>0){ playlistBadge.hidden=false; playlistBadge.textContent = plCount>1? String(plCount) : '🎵'; }
-    else playlistBadge.hidden=true;
 
     const thumbToUse = v.customThumbnail || customThumbs[v.path] || v.sidecarThumbnail || null;
     if(thumbToUse){
@@ -534,74 +528,184 @@
     card.addEventListener('dblclick', ()=> window.electronAPI.openFile(v.path).catch(err=>console.warn('openFile failed',err)));
 
     card.addEventListener('contextmenu', async (e)=>{
-      e.preventDefault(); const existing=document.querySelector('.context-menu'); if(existing) existing.remove();
-      const menu=document.createElement('div'); menu.className='context-menu';
-      menu.style.position='fixed'; menu.style.top=`${e.clientY}px`; menu.style.left=`${e.clientX}px`;
-      menu.style.background='#222'; menu.style.padding='6px'; menu.style.borderRadius='8px'; menu.style.boxShadow='0 8px 30px rgba(0,0,0,0.5)'; menu.style.zIndex='10000';
+  e.preventDefault();
+  const existing = document.querySelector('.context-menu');
+  if (existing) existing.remove();
 
-      const pinOption=document.createElement('div'); pinOption.className='context-item'; pinOption.textContent=pinned.has(v.path)?'Unpin from top':'Pin to top';
-      pinOption.onclick=()=>{ if(pinned.has(v.path)) pinned.delete(v.path); else pinned.add(v.path); saveState(); renderCurrentView(); menu.remove(); };
-      menu.appendChild(pinOption);
+  // Create main context menu
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+  Object.assign(menu.style, {
+    position: 'fixed',
+    top: `${e.clientY}px`,
+    left: `${e.clientX}px`,
+    background: '#222',
+    padding: '6px',
+    borderRadius: '8px',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+    zIndex: '10000',
+    whiteSpace: 'nowrap',
+    minWidth: '180px',
+  });
 
-      const playOption=document.createElement('div'); playOption.className='context-item'; playOption.textContent='Open with system player';
-      playOption.onclick=()=>{ window.electronAPI.openFile(v.path); menu.remove(); }; menu.appendChild(playOption);
-
-      const thumbOption=document.createElement('div'); thumbOption.className='context-item'; thumbOption.textContent='Set Custom Thumbnail';
-      thumbOption.onclick=async ()=>{ const file=await window.electronAPI.selectThumbnail(); if(file){ v.customThumbnail=file; customThumbs[v.path]=file; saveState(); renderCurrentView(); } menu.remove(); };
-      menu.appendChild(thumbOption);
-
-      const removeThumb=document.createElement('div'); removeThumb.className='context-item'; removeThumb.textContent='Remove Custom Thumbnail';
-      removeThumb.onclick=()=>{ if(customThumbs[v.path]) delete customThumbs[v.path]; if(v.customThumbnail) delete v.customThumbnail; saveState(); renderCurrentView(); menu.remove(); };
-      menu.appendChild(removeThumb);
-
-      // Add to playlist submenu
-      const addToPl=document.createElement('div'); addToPl.className='context-item'; addToPl.textContent='Add to playlist ▶';
-      const submenu = document.createElement('div');
-      submenu.style.position='absolute';
-      submenu.style.top='0';
-      submenu.style.left='100%';
-      submenu.style.background='#222';
-      submenu.style.padding='6px';
-      submenu.style.borderRadius='8px';
-      submenu.style.boxShadow='0 8px 30px rgba(0,0,0,0.5)';
-      submenu.style.whiteSpace='nowrap';
-      submenu.style.display='none';
-      submenu.style.zIndex='10001';
-
-      // build playlist entries
-      if(playlists.length===0){
-        const noneEl=document.createElement('div'); noneEl.className='context-item'; noneEl.textContent='(no playlists)'; noneEl.onclick=()=>{}; submenu.appendChild(noneEl);
-      } else {
-        for(const p of playlists){
-          const item=document.createElement('div'); item.className='context-item';
-          const inPl = (p.videos||[]).includes(v.path);
-          item.textContent = `${inPl ? '✓ ' : ''}${p.name} (${(p.videos||[]).length})`;
-          item.onclick=()=>{
-            if(inPl) removeVideoFromPlaylist(p.id, v.path);
-            else addVideoToPlaylist(p.id, v.path);
-            // update badge live
-            saveState();
-            renderCurrentView();
-            menu.remove();
-          };
-          submenu.appendChild(item);
-        }
-      }
-      // option to create new playlist with this video
-      const newPlItem = document.createElement('div'); newPlItem.className='context-item'; newPlItem.textContent='Create new playlist...';
-      newPlItem.onclick=()=>{
-        openPlaylistModalForCreate(v.path);
-        menu.remove();
-      };
-      submenu.appendChild(newPlItem);
-
-      addToPl.appendChild(submenu);
-      addToPl.addEventListener('mouseenter', ()=> submenu.style.display='block');
-      addToPl.addEventListener('mouseleave', ()=> submenu.style.display='none');
-      menu.appendChild(addToPl);
-
-      document.body.appendChild(menu); document.addEventListener('click', ()=> menu.remove(), { once: true });
+  const makeItem = (text, onClick, cursor='pointer') => {
+    const item = document.createElement('div');
+    item.className = 'context-item';
+    item.textContent = text;
+    Object.assign(item.style, {
+      padding: '6px 10px',
+      cursor,
     });
+    item.addEventListener('mouseenter', ()=> item.style.background = 'rgba(255,255,255,0.04)');
+    item.addEventListener('mouseleave', ()=> item.style.background = 'transparent');
+    item.addEventListener('click', (ev)=> {
+      ev.stopPropagation();
+      try { onClick(ev); } catch(err) { console.warn(err); }
+    });
+    return item;
+  };
+
+  // --- options ---
+  const pinOption = makeItem(pinned.has(v.path) ? 'Unpin from top' : 'Pin to top', ()=>{
+    if(pinned.has(v.path)) pinned.delete(v.path); else pinned.add(v.path);
+    saveState();
+    renderCurrentView();
+    cleanup();
+  });
+  menu.appendChild(pinOption);
+
+  const playOption = makeItem('Open with system player', ()=>{
+    window.electronAPI.openFile(v.path);
+    cleanup();
+  });
+  menu.appendChild(playOption);
+
+  const thumbOption = makeItem('Set Custom Thumbnail', async ()=>{
+    const file = await window.electronAPI.selectThumbnail();
+    if(file){ v.customThumbnail = file; customThumbs[v.path] = file; saveState(); renderCurrentView(); }
+    cleanup();
+  });
+  menu.appendChild(thumbOption);
+
+  const removeThumb = makeItem('Remove Custom Thumbnail', ()=>{
+    if(customThumbs[v.path]) delete customThumbs[v.path];
+    if(v.customThumbnail) delete v.customThumbnail;
+    saveState();
+    renderCurrentView();
+    cleanup();
+  });
+  menu.appendChild(removeThumb);
+
+  // --- Add to Playlist (submenu) ---
+  const addToPl = makeItem('Add to playlist ▶', ()=>{}, 'default');
+  menu.appendChild(addToPl);
+
+  // Create submenu
+  const submenu = document.createElement('div');
+  submenu.className = 'context-submenu';
+  Object.assign(submenu.style, {
+    position: 'fixed',
+    background: '#222',
+    padding: '6px',
+    borderRadius: '8px',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+    whiteSpace: 'nowrap',
+    zIndex: '10001',
+    minWidth: '180px',
+    display: 'none',
+  });
+
+  const populateSubmenu = ()=>{
+    submenu.innerHTML = '';
+    if(playlists.length === 0){
+      const noneEl = makeItem('(no playlists)', ()=>{}, 'default');
+      submenu.appendChild(noneEl);
+    } else {
+      for(const p of playlists){
+        const inPl = (p.videos||[]).includes(v.path);
+        const item = makeItem(`${inPl ? '✓ ' : ''}${p.name} (${(p.videos||[]).length})`, ()=>{
+          if(inPl) removeVideoFromPlaylist(p.id, v.path);
+          else addVideoToPlaylist(p.id, v.path);
+          saveState();
+          renderCurrentView();
+          cleanup();
+        });
+        submenu.appendChild(item);
+      }
+    }
+
+    const newPlItem = makeItem('Create new playlist...', ()=>{
+      openPlaylistModalForCreate(v.path);
+      cleanup();
+    });
+    submenu.appendChild(newPlItem);
+  };
+
+  populateSubmenu();
+  document.body.appendChild(menu);
+  document.body.appendChild(submenu);
+
+  // --- submenu hover logic ---
+  let hideTimeout = null;
+  const clearHide = ()=> { if(hideTimeout){ clearTimeout(hideTimeout); hideTimeout = null; } };
+
+  const showSubmenu = ()=>{
+    clearHide();
+    submenu.style.display = 'block';
+    submenu.style.visibility = 'hidden';
+
+    const parentRect = addToPl.getBoundingClientRect();
+    const submenuRect = submenu.getBoundingClientRect();
+
+    let left = parentRect.right + 6;
+    let top = parentRect.top;
+
+    if(left + submenuRect.width > window.innerWidth - 8){
+      left = parentRect.left - submenuRect.width - 6;
+    }
+    if(top + submenuRect.height > window.innerHeight - 8){
+      top = Math.max(8, window.innerHeight - submenuRect.height - 8);
+    }
+    if(top < 8) top = 8;
+
+    submenu.style.left = `${Math.round(left)}px`;
+    submenu.style.top = `${Math.round(top)}px`;
+    submenu.style.visibility = 'visible';
+  };
+
+  const scheduleHide = ()=>{
+    clearHide();
+    hideTimeout = setTimeout(()=> submenu.style.display = 'none', 180);
+  };
+
+  addToPl.addEventListener('mouseenter', showSubmenu);
+  addToPl.addEventListener('mouseleave', scheduleHide);
+  submenu.addEventListener('mouseenter', ()=>{ clearHide(); submenu.style.display = 'block'; });
+  submenu.addEventListener('mouseleave', scheduleHide);
+
+  // --- cleanup ---
+  const cleanup = ()=>{
+    clearHide();
+    if(submenu && submenu.parentNode) submenu.remove();
+    if(menu && menu.parentNode) menu.remove();
+    document.removeEventListener('click', clickHandler);
+    window.removeEventListener('resize', cleanup);
+    window.removeEventListener('scroll', cleanup);
+  };
+
+  const clickHandler = (ev)=>{
+    if(!menu.contains(ev.target) && !submenu.contains(ev.target)) cleanup();
+  };
+  document.addEventListener('click', clickHandler);
+  window.addEventListener('resize', cleanup);
+  window.addEventListener('scroll', cleanup);
+
+});
+
+
+visibleCards.push({ el: card, path: v.path });
+return card;
+
 
     visibleCards.push({el:card,path:v.path});
     return card;
