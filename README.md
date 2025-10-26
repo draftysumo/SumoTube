@@ -146,17 +146,6 @@ npm run build-linux
 npx electron-builder build --linux deb,rpm,AppImage --x64 --arm64
 ```
 
-
-This produces:
-
-```
-dist/SumoTube_X.X.X_amd64.deb
-dist/SumoTube_X.X.X_arm64.deb
-dist/SumoTube-X.X.X.x86_64.rpm
-dist/SumoTube-X.X.X.aarch64.rpm
-dist/SumoTube-X.X.X.AppImage
-```
-
 ### Windows
 
 1. Install Node.js (LTS): ```https://nodejs.org/en/download```
