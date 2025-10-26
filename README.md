@@ -6,7 +6,7 @@
 # SumoTube
 
 **A sleek, offline video browser for Windows & Linux.**  
-Browse and preview your local videos with hover previews, artist pages, custom thumbnails, and pinning — all in a clean, minimal UI.
+Browse and preview your local videos with hover previews, artist pages, custom thumbnails, custom playlists and pinning — all in a clean, minimal UI.
 
 [![Downloads](https://img.shields.io/github/downloads/draftysumo/SumoTube/total?style=for-the-badge&color=4CAF50)](https://github.com/draftysumo/SumoTube/releases)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue?style=for-the-badge)](#)
@@ -20,6 +20,7 @@ Browse and preview your local videos with hover previews, artist pages, custom t
 
 <img width="1920" height="1032" alt="Screenshot from 2025-10-11 12-02-38" src="https://github.com/user-attachments/assets/b79323c7-e935-4e22-8699-5c0ffa2cf3e5" />
 <img width="1920" height="1032" alt="Screenshot from 2025-10-11 12-03-04" src="https://github.com/user-attachments/assets/88c0e6da-0041-4682-90a3-178fbbe7ce9c" />
+<img width="1920" height="1032" alt="Screenshot from 2025-10-26 18-56-33" src="https://github.com/user-attachments/assets/57eec449-c8e5-4f22-a058-acee4918294c" />
 
 </div>
 
@@ -48,11 +49,10 @@ Browse and preview your local videos with hover previews, artist pages, custom t
 * **Sorting Options:** Sort by random, title (asc/desc), or artist (asc/desc).
 * **Search:** Filter by video title or artist name in real time.
 * **Artist View:** Navigate into an artist (parent folder) page, set profile pictures, and edit artist bios.
-* **Persistent State:** Last folder, pinned videos, custom thumbnails, and artist bios are saved between sessions.
+* **Playlists:** Full playlist creation and management.
 * **Resizable Layout:** Responsive grid that adapts to window size.
 * **Open Videos:** Click a card to open the video in your system’s default player.
-* **Minimal Chrome:** Default application menu is removed for a clean look.
-* **Controller Support:** Navigate the grid ui with a controller when you are away from your mouse.
+* **Controller Support:** Navigate the grid ui with a controller when you are away from your mouse. Great for Laptop-to-TV setups.
 
 ---
 
@@ -68,11 +68,12 @@ Browse and preview your local videos with hover previews, artist pages, custom t
   * Thumbnail, title, artist, duration pill, pin icon.
   * Hover to preview video.
   * Click to play.
-* **Artist Sidebar**
+* **Sidebar**
 
-  * Lists artists (folders) with video counts.
+  * Lists artists (folders) & playlists with video counts.
   * Click an artist to open their dedicated page.
-* **Artist Page**
+  * Click a playlist to open it's page.
+* **Artist & Playlist Page**
 
   * Large profile picture and bio (editable).
   * Buttons for setting PFP, editing bio, and going back.
@@ -87,7 +88,7 @@ Browse and preview your local videos with hover previews, artist pages, custom t
 4. Right-click a card to toggle pin state.
 5. Search bar dynamically filters results by title or artist.
 6. Artists are grouped by parent folder. Selecting one opens their profile page.
-7. Custom thumbnails and artist bios are saved persistently in local storage.
+7. Custom thumbnails, playlists and artist bios are saved persistently in local storage.
 8. Opening a video launches it with the system’s default video player.
 
 ---
@@ -219,7 +220,7 @@ git push origin feature/my-feature
 * Use consistent code style.
 * Document new features in the README.
 * Keep commits small and descriptive.
-* Follow the GenAI use [guidelines](#transparent-genai-use-summary/guidelines) the app follows.
+* Follow the GenAI use guidelines the app follows.
 
 ## Suggested Repository Structure
 
