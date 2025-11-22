@@ -63,6 +63,7 @@ Browse and preview all your local videos — all in a clean, minimal UI.
 * Built in youtube downloader (yt-dlp gui built in)
 * FULL Controller support (for navigating when Away. From. Keyboard)
 * Android TV Build
+* Ported to Flatpak
 
 ---
 
