@@ -5,8 +5,7 @@
 
 # SumoTube
 
-**A no-fuss, offline video browser for Windows, Linux, and eventually Android TV**  
-Browse and preview all your local videos — all in a clean, minimal UI.
+A **no-fuss**, offline video browser for Windows, Linux, and eventually Android TV with a **YouTube-like** UI.
 
 [![Downloads](https://img.shields.io/github/downloads/draftysumo/SumoTube/total?style=for-the-badge&color=4CAF50)](https://github.com/draftysumo/SumoTube/releases)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue?style=for-the-badge)](#)
