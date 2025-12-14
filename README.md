@@ -249,6 +249,7 @@ published by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
 More information can be found [here](https://github.com/draftysumo/SumoTube/blob/stable/LICENSE).
+
 ---
 
 ## Transparent GenAI Use Summary/Guidelines
