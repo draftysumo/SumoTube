@@ -240,9 +240,15 @@ sumotube/
 ---
 
 ## License
-### Gnu Public License v3.0 (GPL-30)
-The GNU General Public License v3.0 (GPL-3.0) is a copyleft open-source license that allows anyone to use, modify, and distribute software freely, as long as any derivative works are also released under the same license. It ensures that the source code remains accessible, prevents the addition of DRM or patent restrictions, and prohibits hardware or software measures that would block modified versions from running, thereby guaranteeing that users always retain the freedom to study, change, and share the software.
+[![GNU GPLv3 Image](https://www.gnu.org/graphics/gplv3-127x51.png)](http://www.gnu.org/licenses/gpl-3.0.en.html)
 
+SumoTube is Free Software: You can use, study share and improve it at your
+will. Specifically you can redistribute and/or modify it under the terms of the
+[GNU General Public License](https://www.gnu.org/licenses/gpl.html) as
+published by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+More information can be found [here](https://github.com/draftysumo/SumoTube/blob/stable/LICENSE).
 ---
 
 ## Transparent GenAI Use Summary/Guidelines
