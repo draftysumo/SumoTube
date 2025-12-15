@@ -27,6 +27,14 @@
   const playlistSave = document.getElementById('playlistSave');
   const playlistCancel = document.getElementById('playlistCancel');
 
+  // New: Metadata modal elements
+  const metaModal = document.getElementById('metaModal');
+  const metaModalTitle = document.getElementById('metaModalTitle');
+  const metaTitleInput = document.getElementById('metaTitleInput');
+  const metaArtistInput = document.getElementById('metaArtistInput');
+  const metaSave = document.getElementById('metaSave');
+  const metaCancel = document.getElementById('metaCancel');
+
   // small placeholder SVG for artists without pfp
   const PLACEHOLDER_PFP = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><rect fill="#0b1220" width="24" height="24" rx="4"/><g fill="#9aa4b2"><circle cx="12" cy="8" r="3"/><path d="M4 20c0-3.3 2.7-6 6-6h4c3.3 0 6 2.7 6 6v.5H4V20z"/></g></svg>`);
 
@@ -36,9 +44,13 @@
   let artistProfiles = {};
   let customThumbs = {};
   let playlists = []; // each: { id, name, description, pfp, videos: [path] }
+  // Add customMetadata state
+  let customMetadata = {}; // { [path]: { title: '...', parent: '...' } }
   let currentView = { type: 'grid' };
   let editingArtist = null;
   let currentFolder = null;
+  // Add editingVideoPath state
+  let editingVideoPath = null;
 
   // keyboard navigation state
   let visibleCards = [];
@@ -53,12 +65,15 @@
       if(parsed.pinned && Array.isArray(parsed.pinned)) pinned = new Set(parsed.pinned);
       artistProfiles = parsed.artistProfiles || {};
       customThumbs = parsed.customThumbs || {};
+      // Load customMetadata
+      customMetadata = parsed.customMetadata || {};
       playlists = parsed.playlists || [];
     }catch(e){console.warn('Failed to load state',e)}
   }
 
   function saveState(){
-    const payload = { pinned: Array.from(pinned), artistProfiles, customThumbs, playlists };
+    // Include customMetadata in payload
+    const payload = { pinned: Array.from(pinned), artistProfiles, customThumbs, playlists, customMetadata };
     try{ localStorage.setItem('video_browser_state', JSON.stringify(payload)); }catch(e){console.warn('Failed to save state',e)}
   }
 
@@ -115,6 +130,73 @@
     renderCurrentView();
     bioModal.setAttribute('hidden','');
     editingArtist=null;
+  });
+
+  // Metadata modal logic
+  function showMetaModal(video){
+    // Find the raw video object to compare against defaults
+    const rawVideo = videos.find(v=>v.path===video.path);
+    if(!rawVideo) return;
+    
+    editingVideoPath = video.path;
+    const currentMeta = customMetadata[editingVideoPath];
+    
+    metaModalTitle.textContent = 'Edit Display Info: ' + rawVideo.name;
+    // Use the *display* value if it exists, otherwise the raw value.
+    metaTitleInput.value = currentMeta?.title || rawVideo.title;
+    metaArtistInput.value = currentMeta?.parent || rawVideo.parent; // Use rawVideo.parent as the default
+    
+    metaModal.removeAttribute('hidden');
+    metaTitleInput.focus();
+  }
+  
+  metaCancel.addEventListener('click', ()=>{ metaModal.setAttribute('hidden',''); editingVideoPath=null; });
+  metaSave.addEventListener('click', ()=>{
+    if(!editingVideoPath) return;
+    
+    const newTitle = metaTitleInput.value.trim();
+    const newArtist = metaArtistInput.value.trim();
+
+    // Get the raw video data to check against defaults
+    const rawVideo = videos.find(v=>v.path===editingVideoPath);
+    if(!rawVideo) return;
+    
+    // Check if the new values are the same as the originals derived from the file system
+    const isDefaultTitle = newTitle === rawVideo.title;
+    const isDefaultArtist = newArtist === rawVideo.parent;
+
+    if(isDefaultTitle && isDefaultArtist){
+      // If both are reset to defaults, remove the custom entry
+      if(customMetadata[editingVideoPath]) delete customMetadata[editingVideoPath];
+    } else {
+      // Otherwise, save the custom values
+      customMetadata[editingVideoPath] = customMetadata[editingVideoPath] || {};
+      
+      // Only store the override if it's different from the default
+      if(!isDefaultTitle) customMetadata[editingVideoPath].title = newTitle;
+      else if (customMetadata[editingVideoPath].title) delete customMetadata[editingVideoPath].title; // Clear if it was set but is now default
+
+      if(!isDefaultArtist) customMetadata[editingVideoPath].parent = newArtist;
+      else if (customMetadata[editingVideoPath].parent) delete customMetadata[editingVideoPath].parent; // Clear if it was set but is now default
+
+      // Clean up empty objects
+      if(Object.keys(customMetadata[editingVideoPath]).length === 0) delete customMetadata[editingVideoPath];
+    }
+    
+    saveState();
+    
+    // Update the video list with new display data. Find the index of the video we edited.
+    const vIdx = videos.findIndex(v=>v.path===editingVideoPath);
+    if(vIdx !== -1) {
+      // Regenerate the display version of this one video
+      videos[vIdx] = getDisplayVideo(rawVideo);
+    }
+    
+    // Re-render the view to show changes
+    renderCurrentView();
+
+    metaModal.setAttribute('hidden','');
+    editingVideoPath=null;
   });
 
   // Playlist helpers
@@ -252,6 +334,20 @@
     }));
   }
 
+  // New function to get display-ready video object
+  function getDisplayVideo(rawVideo){
+    const meta = customMetadata[rawVideo.path];
+    return {
+      ...rawVideo,
+      title: meta?.title || rawVideo.title,
+      parent: meta?.parent || rawVideo.parent,
+      // Store original parent for sidebar grouping/filtering
+      originalParent: rawVideo.parent, 
+      isCustomTitle: !!meta?.title,
+      isCustomParent: !!meta?.parent,
+    }
+  }
+
   // Restore last folder
   if(window.electronAPI?.getLastFolder){
     const lastFolder = await window.electronAPI.getLastFolder();
@@ -263,7 +359,8 @@
         if(res && !res.canceled){
           currentFolder=lastFolder;
           if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-          videos = normalizeFiles(res.files);
+          // Patch: Use getDisplayVideo
+          videos = normalizeFiles(res.files).map(getDisplayVideo);
           for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail = customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
           currentView={type:'grid'};
           if(sortSelect?.value==='random') shuffleArray(videos);
@@ -282,7 +379,8 @@
       if(res && !res.canceled){
         currentFolder=res.folder;
         if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-        videos=normalizeFiles(res.files);
+        // Patch: Use getDisplayVideo
+        videos = normalizeFiles(res.files).map(getDisplayVideo);
         for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail=customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
         currentView={type:'grid'};
         if(sortSelect?.value==='random') shuffleArray(videos);
@@ -297,7 +395,8 @@
         const res=await window.electronAPI.rescanFolder(currentFolder);
         if(res && !res.canceled){
           if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-          videos=normalizeFiles(res.files);
+          // Patch: Use getDisplayVideo
+          videos = normalizeFiles(res.files).map(getDisplayVideo);
           for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail=customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
           if(sortSelect?.value==='random') shuffleArray(videos);
           render();
@@ -308,7 +407,8 @@
       if(res && !res.canceled){
         currentFolder=res.folder;
         if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-        videos=normalizeFiles(res.files);
+        // Patch: Use getDisplayVideo
+        videos = normalizeFiles(res.files).map(getDisplayVideo);
         for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail=customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
         if(sortSelect?.value==='random') shuffleArray(videos);
         render();
@@ -359,7 +459,8 @@
   function buildArtists(){
     const map=new Map();
     for(const v of videos){
-      const artist=v.parent||'Unknown';
+      // Patch: Use originalParent for the sidebar grouping
+      const artist=v.originalParent||'Unknown';
       if(!map.has(artist)) map.set(artist,[]);
       map.get(artist).push(v);
     }
@@ -381,7 +482,8 @@
     buildPlaylists();
     visibleCards=[]; selectedIndex=-1;
     const q=(search?.value||'').trim().toLowerCase();
-    let filtered=videos.filter(v=> !q || v.title.toLowerCase().includes(q) || (v.parent||'').toLowerCase().includes(q));
+    // Patch: Search against originalParent as well, for consistency
+    let filtered=videos.filter(v=> !q || v.title.toLowerCase().includes(q) || (v.parent||'').toLowerCase().includes(q) || (v.originalParent||'').toLowerCase().includes(q));
     applySort(filtered);
     for(const v of filtered) addVideoCard(v);
   }
@@ -403,7 +505,7 @@
     const bio=document.createElement('p'); bio.textContent=artistProfiles[artist]?.bio||'No bio yet.'; meta.appendChild(bio);
 
     const actions=document.createElement('div'); actions.className='artist-actions';
-    const setPfpBtn=document.createElement('button'); setPfpBtn.textContent='Set Profile Picture';
+    const setPfpBtn=document.createElement('button'); setPfpBtn.textContent='Set Picture';
     setPfpBtn.onclick=async ()=>{
       const f = await window.electronAPI.selectThumbnail();
       if(f){ artistProfiles[artist] = artistProfiles[artist]||{}; artistProfiles[artist].pfp=f; pfp.src=fileUrl(f); saveState(); render(); }
@@ -418,12 +520,15 @@
     meta.appendChild(actions); header.appendChild(meta); container.appendChild(header);
 
     const listWrap=document.createElement('div');
+    // PATCH START: Explicitly set grid properties to ensure multi-column layout.
     listWrap.style.display='grid';
     listWrap.style.gridTemplateColumns='repeat(auto-fill,minmax(320px,1fr))';
-    listWrap.style.gap='12px';
+    listWrap.style.gap='16px';
+    // PATCH END
     listWrap.style.marginTop='18px';
 
-    const filtered=videos.filter(v=>v.parent===artist);
+    // Patch: Filter based on originalParent for consistency with buildArtists
+    const filtered=videos.filter(v=>v.originalParent===artist);
     applySort(filtered);
     for(const v of filtered){ const cardEl=createCardElement(v); listWrap.appendChild(cardEl); }
 
@@ -457,7 +562,7 @@
     };
     actions.appendChild(setPfpBtn);
 
-    const editDescBtn=document.createElement('button'); editDescBtn.textContent='Edit Description';
+    const editDescBtn=document.createElement('button'); editDescBtn.textContent='Edit Playlist';
     editDescBtn.addEventListener('click', ()=>{
       // open playlist modal in edit mode
       openPlaylistModalForEdit(pl.id);
@@ -469,9 +574,11 @@
     meta.appendChild(actions); header.appendChild(meta); container.appendChild(header);
 
     const listWrap=document.createElement('div');
+    // PATCH START: Explicitly set grid properties to ensure multi-column layout.
     listWrap.style.display='grid';
     listWrap.style.gridTemplateColumns='repeat(auto-fill,minmax(320px,1fr))';
-    listWrap.style.gap='12px';
+    listWrap.style.gap='16px';
+    // PATCH END
     listWrap.style.marginTop='18px';
 
     const filtered = (pl.videos||[]).map(pv=> videos.find(v=>v.path===pv)).filter(Boolean);
@@ -503,6 +610,13 @@
     artistPfp.src=fileUrl(artistProfiles[v.parent]?.pfp)||PLACEHOLDER_PFP;
 
     pinIcon.hidden = !pinned.has(v.path);
+    
+    // Patch: Add classes to highlight custom metadata
+    if(v.isCustomTitle) title.classList.add('custom-meta-override');
+    else title.classList.remove('custom-meta-override');
+    
+    if(v.isCustomParent) artistName.classList.add('custom-meta-override');
+    else artistName.classList.remove('custom-meta-override');
 
     const thumbToUse = v.customThumbnail || customThumbs[v.path] || v.sidecarThumbnail || null;
     if(thumbToUse){
@@ -574,11 +688,7 @@
   });
   menu.appendChild(pinOption);
 
-  const playOption = makeItem('Open with system player', ()=>{
-    window.electronAPI.openFile(v.path);
-    cleanup();
-  });
-  menu.appendChild(playOption);
+  // REMOVED: "Open with system player" option (removed in previous step)
 
   const thumbOption = makeItem('Set Custom Thumbnail', async ()=>{
     const file = await window.electronAPI.selectThumbnail();
@@ -595,6 +705,13 @@
     cleanup();
   });
   menu.appendChild(removeThumb);
+
+  // NEW: Edit Metadata option
+  const editMetaOption = makeItem('Edit Title / Artist', ()=>{
+    showMetaModal(v);
+    cleanup();
+  });
+  menu.appendChild(editMetaOption);
 
   // --- Add to Playlist (submenu) ---
   const addToPl = makeItem('Add to playlist ▶', ()=>{}, 'default');
@@ -701,10 +818,6 @@
   window.addEventListener('scroll', cleanup);
 
 });
-
-
-visibleCards.push({ el: card, path: v.path });
-return card;
 
 
     visibleCards.push({el:card,path:v.path});

@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Top application menu removed intentionally for a minimal UI -->
-
   <main>
     <aside class="leftpane">
       <div class="left-controls">
@@ -60,7 +58,6 @@
     </div>
   </template>
 
-  <!-- Bio modal -->
   <div id="bioModal" class="modal" hidden>
     <div class="modal-content">
       <h3 id="modalArtistName">Artist</h3>
@@ -72,7 +69,6 @@
     </div>
   </div>
 
-  <!-- Playlist modal -->
   <div id="playlistModal" class="modal" hidden>
     <div class="modal-content">
       <h3 id="playlistModalTitle">New Playlist</h3>
@@ -88,8 +84,23 @@
       </div>
     </div>
   </div>
+  
+  <div id="metaModal" class="modal" hidden>
+    <div class="modal-content">
+      <h3 id="metaModalTitle">Edit Display Info: Filename.mp4</h3>
+      <label for="metaTitleInput">Title Override</label>
+      <input id="metaTitleInput" placeholder="Enter title override" />
+      
+      <label for="metaArtistInput">Artist Override</label>
+      <input id="metaArtistInput" placeholder="Enter artist override" />
+      
+      <div class="modal-actions">
+        <button id="metaSave">Save</button>
+        <button id="metaCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script src="renderer.js"></script>
-  <!-- Startup logic is now handled in renderer.js only -->
-</body>
+  </body>
 </html>

@@ -1,6 +1,6 @@
 {
   "name": "sumotube",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "description": "Cross-OS local YouTube-like video browser",
   "author": {
     "name": "Drafty Sumo",
@@ -63,5 +63,5 @@
   },
   "dependencies": {
     "electron-store": "^11.0.2"
-  
+  }
 }
