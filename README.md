@@ -136,7 +136,7 @@ sudo apt install -y fakeroot dpkg-dev rpm
 
 ```
 git clone https://github.com/draftysumo/sumotube.git
-cd SumoTube
+cd sumotube
 npm install
 npm install electron
 npm install electron-store
