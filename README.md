@@ -5,7 +5,7 @@
 
 # SumoTube
 
-A **no-fuss**, offline video browser for Windows, Linux, and eventually Android TV with a **YouTube-like** UI.
+A **no-fuss**, offline video browser for Windows & Linux.
 
 [![Downloads](https://img.shields.io/github/downloads/draftysumo/SumoTube/total?style=for-the-badge&color=4CAF50)](https://github.com/draftysumo/SumoTube/releases)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue?style=for-the-badge)](#)
@@ -48,6 +48,7 @@ A **no-fuss**, offline video browser for Windows, Linux, and eventually Android 
 * **Random Home Page:** Default random shuffle to mimic algorithmic rediscovery.
 * **Sorting Options:** Sort by random, title (asc/desc), or artist (asc/desc).
 * **Search:** Filter by video title or artist name in real time.
+* **Change video/file display** title & artist name in app on the fly (doesn't modify the file)
 * **Artist View:** Navigate into an artist (parent folder) page, set profile pictures, and edit artist bios.
 * **Playlists:** Full playlist creation and management.
 * **Resizable Layout:** Responsive grid that adapts to window size.
@@ -135,7 +136,7 @@ sudo apt install -y fakeroot dpkg-dev rpm
 
 ```
 git clone https://github.com/draftysumo/sumotube.git
-cd sumotube
+cd SumoTube
 npm install
 npm install electron
 npm install electron-store
@@ -163,7 +164,7 @@ npx electron-builder build --linux deb,rpm,AppImage --x64 --arm64
 
 ```
 git clone https://github.com/draftysumo/sumotube.git
-cd sumotube
+cd SumoTube
 npm install
 npm install electron
 npm install electron-store
@@ -223,17 +224,16 @@ git push origin feature/my-feature
 ## Suggested Repository Structure
 
 ```
-sumotube/
-├── node_modules/
+SumoTube/
+├── ARCHITECTURE.md
 ├── assets/
-|    └──icons/
-├── main.js
-├── preload.js
-├── renderer.js
+|    └──icons/
 ├── index.html
+├── main.js
 ├── package.json
-├── package-lock.json
+├── preload.js
 ├── README.md
+├── renderer.js
 └── styles.css
 ```
 
