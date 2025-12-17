@@ -77,6 +77,42 @@ main{display:flex;height:100vh}
   .grid, .video-list-grid {grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
 }
 
+/* --- Thumbnail Edit Fixes --- */
+.thumb-edit-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#metaThumbPreview {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure buttons inside the modal look clickable */
+.modal-actions button {
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: opacity 0.1s, transform 0.1s;
+}
+
+.modal-actions button:active {
+  transform: scale(0.96);
+}
+
+.thumb-controls button {
+  background: var(--glass);
+  border: 1px solid rgba(255,255,255,0.05);
+  color: var(--muted);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.thumb-controls button:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
 /* --- Playlist & sidebar tweaks --- */
 
 /* container for playlists section inside leftpane */

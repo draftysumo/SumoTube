@@ -37,8 +37,15 @@
   const metaModalTitle = document.getElementById('metaModalTitle');
   const metaTitleInput = document.getElementById('metaTitleInput');
   const metaArtistInput = document.getElementById('metaArtistInput');
-  const metaSave = document.getElementById('metaSave');
-  const metaCancel = document.getElementById('metaCancel');
+  
+  // PATCHED: Using the new IDs for Save/Cancel buttons
+  const metaSave = document.getElementById('metaSaveBtn');
+  const metaCancel = document.getElementById('metaCancelBtn');
+
+  // NEW ELEMENTS for consolidated Edit Info modal
+  const metaThumbPreview = document.getElementById('metaThumbPreview');
+  const metaSelectThumb = document.getElementById('metaSelectThumb');
+  const metaRemoveThumb = document.getElementById('metaRemoveThumb');
 
   // small placeholder SVG for artists without pfp
   const PLACEHOLDER_PFP = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24"><rect fill="#0b1220" width="24" height="24" rx="4"/><g fill="#9aa4b2"><circle cx="12" cy="8" r="3"/><path d="M4 20c0-3.3 2.7-6 6-6h4c3.3 0 6 2.7 6 6v.5H4V20z"/></g></svg>`);
@@ -56,6 +63,8 @@
   let editingVideoPath = null;
   // State for temporary PFP path
   let editingArtistPfpPath = null;
+  // State for temporary custom thumbnail path in meta modal
+  let tempMetaThumbPath = null;
 
   // keyboard navigation state
   let visibleCards = [];
@@ -195,7 +204,7 @@
     editingArtistPfpPath = null;
   });
 
-  // Metadata modal logic
+  // Metadata modal logic - UPDATED to handle thumbnail as well
   function showMetaModal(video){
     const rawVideo = videos.find(v=>v.path===video.path);
     if(!rawVideo) return;
@@ -205,52 +214,105 @@
     
     metaModalTitle.textContent = 'Edit Display Info: ' + rawVideo.name;
     metaTitleInput.value = currentMeta?.title || rawVideo.title;
-    // NOTE: metaArtistInput should still default to the original parent for easy removal
     metaArtistInput.value = currentMeta?.parent || rawVideo.originalParent; 
+
+    // Initialize temporary thumbnail state
+    tempMetaThumbPath = customThumbs[editingVideoPath] || null;
+    const currentThumb = tempMetaThumbPath || rawVideo.sidecarThumbnail || null;
+    if (metaThumbPreview) {
+        metaThumbPreview.src = currentThumb ? fileUrl(currentThumb) : '';
+        metaThumbPreview.style.display = currentThumb ? 'block' : 'none';
+    }
     
     metaModal.removeAttribute('hidden');
     metaTitleInput.focus();
   }
   
-  metaCancel.addEventListener('click', ()=>{ metaModal.setAttribute('hidden',''); editingVideoPath=null; });
-  metaSave.addEventListener('click', ()=>{
-    if(!editingVideoPath) return;
-    
-    const newTitle = metaTitleInput.value.trim();
-    const newArtist = metaArtistInput.value.trim();
+  // NEW: Listeners for thumbnail selection inside Edit Info modal
+  if (metaSelectThumb) {
+    metaSelectThumb.addEventListener('click', async () => {
+      const f = await window.electronAPI.selectThumbnail();
+      if (f) {
+        tempMetaThumbPath = f;
+        metaThumbPreview.src = fileUrl(f);
+        metaThumbPreview.style.display = 'block';
+      }
+    });
+  }
 
-    const rawVideo = videos.find(v=>v.path===editingVideoPath);
-    if(!rawVideo) return;
-    
-    const isDefaultTitle = newTitle === rawVideo.title;
-    const isDefaultArtist = newArtist === rawVideo.originalParent;
+  if (metaRemoveThumb) {
+    metaRemoveThumb.addEventListener('click', () => {
+      tempMetaThumbPath = null;
+      // Show original sidecar if it exists, otherwise hide
+      const raw = videos.find(v => v.path === editingVideoPath);
+      if (raw && raw.sidecar) {
+        metaThumbPreview.src = fileUrl(raw.sidecar);
+      } else {
+        metaThumbPreview.src = '';
+        metaThumbPreview.style.display = 'none';
+      }
+    });
+  }
 
-    if(isDefaultTitle && isDefaultArtist){
-      if(customMetadata[editingVideoPath]) delete customMetadata[editingVideoPath];
-    } else {
-      customMetadata[editingVideoPath] = customMetadata[editingVideoPath] || {};
-      
-      if(!isDefaultTitle) customMetadata[editingVideoPath].title = newTitle;
-      else if (customMetadata[editingVideoPath].title) delete customMetadata[editingVideoPath].title;
+  // PATCHED: Consolidated Close logic
+  const handleMetaClose = () => {
+    metaModal.setAttribute('hidden', '');
+    editingVideoPath = null;
+    tempMetaThumbPath = null;
+  };
 
-      if(!isDefaultArtist) customMetadata[editingVideoPath].parent = newArtist;
-      else if (customMetadata[editingVideoPath].parent) delete customMetadata[editingVideoPath].parent;
+  if (metaCancel) {
+    metaCancel.addEventListener('click', handleMetaClose);
+  }
 
-      if(Object.keys(customMetadata[editingVideoPath]).length === 0) delete customMetadata[editingVideoPath];
-    }
-    
-    saveState();
-    
-    const vIdx = videos.findIndex(v=>v.path===editingVideoPath);
-    if(vIdx !== -1) {
-      videos[vIdx] = getDisplayVideo(rawVideo);
-    }
-    
-    renderCurrentView();
+  // PATCHED: Metadata Save Logic
+  if (metaSave) {
+    metaSave.addEventListener('click', () => {
+      if (!editingVideoPath) return;
 
-    metaModal.setAttribute('hidden','');
-    editingVideoPath=null;
-  });
+      const newTitle = metaTitleInput.value.trim();
+      const newArtist = metaArtistInput.value.trim();
+
+      const rawVideo = videos.find(v => v.path === editingVideoPath);
+      if (!rawVideo) return;
+
+      const isDefaultTitle = newTitle === rawVideo.title;
+      const isDefaultArtist = newArtist === rawVideo.originalParent;
+
+      // Handle Text Metadata
+      if (isDefaultTitle && isDefaultArtist) {
+        delete customMetadata[editingVideoPath];
+      } else {
+        customMetadata[editingVideoPath] = {
+          ...(customMetadata[editingVideoPath] || {}),
+          title: !isDefaultTitle ? newTitle : undefined,
+          parent: !isDefaultArtist ? newArtist : undefined
+        };
+        if (!customMetadata[editingVideoPath].title) delete customMetadata[editingVideoPath].title;
+        if (!customMetadata[editingVideoPath].parent) delete customMetadata[editingVideoPath].parent;
+      }
+
+      // Handle Thumbnail Save
+      if (tempMetaThumbPath) {
+        customThumbs[editingVideoPath] = tempMetaThumbPath;
+      } else {
+        delete customThumbs[editingVideoPath];
+      }
+
+      saveState();
+
+      // Sync local state and re-render
+      const vIdx = videos.findIndex(v => v.path === editingVideoPath);
+      if (vIdx !== -1) {
+        videos[vIdx] = getDisplayVideo(rawVideo);
+        if (customThumbs[editingVideoPath]) videos[vIdx].customThumbnail = customThumbs[editingVideoPath];
+        else delete videos[vIdx].customThumbnail;
+      }
+
+      renderCurrentView();
+      handleMetaClose();
+    });
+  }
 
   // Playlist helpers (unchanged)
   function generateId(){ return 'pl-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); }
@@ -729,27 +791,12 @@
   });
   menu.appendChild(pinOption);
 
-  const thumbOption = makeItem('Set Custom Thumbnail', async ()=>{
-    const file = await window.electronAPI.selectThumbnail();
-    if(file){ v.customThumbnail = file; customThumbs[v.path] = file; saveState(); renderCurrentView(); }
-    cleanup();
-  });
-  menu.appendChild(thumbOption);
-
-  const removeThumb = makeItem('Remove Custom Thumbnail', ()=>{
-    if(customThumbs[v.path]) delete customThumbs[v.path];
-    if(v.customThumbnail) delete v.customThumbnail;
-    saveState();
-    renderCurrentView();
-    cleanup();
-  });
-  menu.appendChild(removeThumb);
-
-  const editMetaOption = makeItem('Edit Title / Artist', ()=>{
+  // CONSOLIDATED OPTION: Now handles thumbnail, title, and artist
+  const editInfoOption = makeItem('Edit Info', ()=>{
     showMetaModal(v);
     cleanup();
   });
-  menu.appendChild(editMetaOption);
+  menu.appendChild(editInfoOption);
 
   // --- Add to Playlist (submenu) ---
   const addToPl = makeItem('Add to playlist ▶', ()=>{}, 'default');

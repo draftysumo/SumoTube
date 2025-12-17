@@ -94,17 +94,42 @@
   </div>
   
   <div id="metaModal" class="modal" hidden>
-    <div class="modal-content">
-      <h3 id="metaModalTitle">Edit Display Info: Filename.mp4</h3>
-      <label for="metaTitleInput">Title Override</label>
-      <input id="metaTitleInput" placeholder="Enter title override" />
-      
-      <label for="metaArtistInput">Artist Override</label>
-      <input id="metaArtistInput" placeholder="Enter artist override" />
-      
-      <div class="modal-actions">
-        <button id="metaSave">Save</button>
-        <button id="metaCancel">Cancel</button>
+  <div class="modal-content" style="max-width: 450px;">
+    <h3 id="metaModalTitle" style="margin-top:0; color: var(--accent);">Edit Video Info</h3>
+    
+    <div class="meta-edit-layout">
+      <div class="input-group" style="margin-bottom: 15px;">
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:var(--muted);">Title Override</label>
+        <input id="metaTitleInput" placeholder="Enter title override" style="width:100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;" />
+      </div>
+
+      <div class="input-group" style="margin-bottom: 15px;">
+        <label style="display:block; margin-bottom:6px; font-size:13px; color:var(--muted);">Artist Override</label>
+        <input id="metaArtistInput" placeholder="Enter artist override" style="width:100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;" />
+      </div>
+
+      <div class="input-group">
+        <label style="display:block; margin-bottom:8px; font-size:13px; color:var(--muted);">Thumbnail</label>
+        <div class="thumb-edit-section">
+          <img id="metaThumbPreview" src="" alt="Thumbnail preview" style="width:100%; max-height:200px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; display: block; background: #000;" />
+          <div class="thumb-controls" style="display: flex; gap: 8px; margin-bottom: 20px;">
+            <button id="metaSelectThumb" style="flex:1; padding: 6px; cursor: pointer;">Change Image</button>
+            <button id="metaRemoveThumb" style="flex:1; padding: 6px; cursor: pointer;">Restore Default</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="metaCancelBtn" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">Cancel</button>
+      <button id="metaSaveBtn" style="cursor: pointer;">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+      <div class="modal-actions" style="margin-top:20px;">
+        <button id="metaSave">Save Changes</button>
+        <button id="metaCancel" style="background:transparent; color:var(--muted);">Cancel</button>
       </div>
     </div>
   </div>
