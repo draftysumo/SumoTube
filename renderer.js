@@ -13,9 +13,14 @@
   const template = document.getElementById('card-template');
   const bioModal = document.getElementById('bioModal');
   const modalArtistName = document.getElementById('modalArtistName');
+  // NEW ELEMENT: Input for display name
+  const modalDisplayNameInput = document.getElementById('modalDisplayNameInput'); 
   const modalBioInput = document.getElementById('modalBioInput');
   const modalSave = document.getElementById('modalSave');
   const modalCancel = document.getElementById('modalCancel');
+  // Bio modal specific elements for PFP
+  const modalSelectPfp = document.getElementById('modalSelectPfp');
+  const modalPfpPreview = document.getElementById('modalPfpPreview');
 
   // Playlist modal elements
   const playlistModal = document.getElementById('playlistModal');
@@ -27,7 +32,7 @@
   const playlistSave = document.getElementById('playlistSave');
   const playlistCancel = document.getElementById('playlistCancel');
 
-  // New: Metadata modal elements
+  // Metadata modal elements
   const metaModal = document.getElementById('metaModal');
   const metaModalTitle = document.getElementById('metaModalTitle');
   const metaTitleInput = document.getElementById('metaTitleInput');
@@ -41,16 +46,16 @@
   // State
   let videos = [];
   let pinned = new Set();
-  let artistProfiles = {};
+  let artistProfiles = {}; // Stores { originalArtistName: { displayName: '...', bio: '...', pfp: '...' } }
   let customThumbs = {};
   let playlists = []; // each: { id, name, description, pfp, videos: [path] }
-  // Add customMetadata state
   let customMetadata = {}; // { [path]: { title: '...', parent: '...' } }
   let currentView = { type: 'grid' };
-  let editingArtist = null;
+  let editingArtist = null; // The original artist name (folder name)
   let currentFolder = null;
-  // Add editingVideoPath state
   let editingVideoPath = null;
+  // State for temporary PFP path
+  let editingArtistPfpPath = null;
 
   // keyboard navigation state
   let visibleCards = [];
@@ -65,14 +70,12 @@
       if(parsed.pinned && Array.isArray(parsed.pinned)) pinned = new Set(parsed.pinned);
       artistProfiles = parsed.artistProfiles || {};
       customThumbs = parsed.customThumbs || {};
-      // Load customMetadata
       customMetadata = parsed.customMetadata || {};
       playlists = parsed.playlists || [];
     }catch(e){console.warn('Failed to load state',e)}
   }
 
   function saveState(){
-    // Include customMetadata in payload
     const payload = { pinned: Array.from(pinned), artistProfiles, customThumbs, playlists, customMetadata };
     try{ localStorage.setItem('video_browser_state', JSON.stringify(payload)); }catch(e){console.warn('Failed to save state',e)}
   }
@@ -113,28 +116,87 @@
     }catch(e){ console.warn('setDurationForVideo failed',e); pillElement.textContent='--:--'; }
   }
 
+  // UPDATED: showBioModal now sets up PFP and Display Name
   function showBioModal(artist){
-    editingArtist = artist;
-    modalArtistName.textContent = artist;
-    modalBioInput.value = artistProfiles[artist]?.bio || '';
+    editingArtist = artist; // This is the original folder name
+    
+    const profile = artistProfiles[artist];
+    const currentDisplayName = profile?.displayName || artist;
+
+    modalArtistName.textContent = `Edit Info for: ${currentDisplayName}`;
+    modalDisplayNameInput.value = currentDisplayName;
+    modalBioInput.value = profile?.bio || '';
+    
+    // Set up PFP preview
+    const pfpPath = profile?.pfp;
+    modalPfpPreview.src = pfpPath ? fileUrl(pfpPath) : PLACEHOLDER_PFP;
+    editingArtistPfpPath = pfpPath; // Set initial path
+    
     bioModal.removeAttribute('hidden');
-    modalBioInput.focus();
+    modalDisplayNameInput.focus();
   }
 
-  modalCancel.addEventListener('click', ()=>{ bioModal.setAttribute('hidden',''); editingArtist=null; });
+  modalCancel.addEventListener('click', ()=>{ 
+    bioModal.setAttribute('hidden',''); 
+    editingArtist=null; 
+    editingArtistPfpPath = null; 
+  });
+  
+  // Handle PFP selection inside the Bio modal
+  modalSelectPfp.addEventListener('click', async ()=>{
+    try{
+      const f = await window.electronAPI.selectThumbnail();
+      if(f){
+        modalPfpPreview.src = fileUrl(f);
+        editingArtistPfpPath = f; // Store temp path
+      }
+    }catch(e){ console.warn('select artist pfp failed', e); }
+  });
+
+  // UPDATED: modalSave now saves PFP, Bio, AND Display Name
   modalSave.addEventListener('click', ()=>{
     if(!editingArtist) return;
-    artistProfiles[editingArtist] = artistProfiles[editingArtist]||{};
-    artistProfiles[editingArtist].bio = modalBioInput.value;
+    
+    const newDisplayName = modalDisplayNameInput.value.trim();
+    const newBio = modalBioInput.value.trim();
+    const originalName = editingArtist;
+    
+    // Check if we need to keep the profile entry at all
+    const isNameChanged = newDisplayName !== originalName;
+    const isBioEmpty = newBio === '';
+    const isPfpEmpty = !editingArtistPfpPath;
+
+    artistProfiles[originalName] = artistProfiles[originalName]||{};
+    const profile = artistProfiles[originalName];
+
+    // 1. Save Display Name
+    if(isNameChanged) profile.displayName = newDisplayName;
+    else if(profile.displayName) delete profile.displayName;
+
+    // 2. Save Bio
+    if(!isBioEmpty) profile.bio = newBio;
+    else if(profile.bio) delete profile.bio;
+
+    // 3. Save PFP
+    if(editingArtistPfpPath) profile.pfp = editingArtistPfpPath;
+    else if(profile.pfp) delete profile.pfp;
+    
+    // Clean up profile entry if nothing is customized
+    if(Object.keys(profile).length === 0) delete artistProfiles[originalName];
+
     saveState();
-    renderCurrentView();
+    
+    // Re-render everything to update all video cards and sidebars
+    renderCurrentView(); 
+    buildArtists(); // Ensure the sidebar list updates
+
     bioModal.setAttribute('hidden','');
     editingArtist=null;
+    editingArtistPfpPath = null;
   });
 
   // Metadata modal logic
   function showMetaModal(video){
-    // Find the raw video object to compare against defaults
     const rawVideo = videos.find(v=>v.path===video.path);
     if(!rawVideo) return;
     
@@ -142,9 +204,9 @@
     const currentMeta = customMetadata[editingVideoPath];
     
     metaModalTitle.textContent = 'Edit Display Info: ' + rawVideo.name;
-    // Use the *display* value if it exists, otherwise the raw value.
     metaTitleInput.value = currentMeta?.title || rawVideo.title;
-    metaArtistInput.value = currentMeta?.parent || rawVideo.parent; // Use rawVideo.parent as the default
+    // NOTE: metaArtistInput should still default to the original parent for easy removal
+    metaArtistInput.value = currentMeta?.parent || rawVideo.originalParent; 
     
     metaModal.removeAttribute('hidden');
     metaTitleInput.focus();
@@ -157,49 +219,40 @@
     const newTitle = metaTitleInput.value.trim();
     const newArtist = metaArtistInput.value.trim();
 
-    // Get the raw video data to check against defaults
     const rawVideo = videos.find(v=>v.path===editingVideoPath);
     if(!rawVideo) return;
     
-    // Check if the new values are the same as the originals derived from the file system
     const isDefaultTitle = newTitle === rawVideo.title;
-    const isDefaultArtist = newArtist === rawVideo.parent;
+    const isDefaultArtist = newArtist === rawVideo.originalParent;
 
     if(isDefaultTitle && isDefaultArtist){
-      // If both are reset to defaults, remove the custom entry
       if(customMetadata[editingVideoPath]) delete customMetadata[editingVideoPath];
     } else {
-      // Otherwise, save the custom values
       customMetadata[editingVideoPath] = customMetadata[editingVideoPath] || {};
       
-      // Only store the override if it's different from the default
       if(!isDefaultTitle) customMetadata[editingVideoPath].title = newTitle;
-      else if (customMetadata[editingVideoPath].title) delete customMetadata[editingVideoPath].title; // Clear if it was set but is now default
+      else if (customMetadata[editingVideoPath].title) delete customMetadata[editingVideoPath].title;
 
       if(!isDefaultArtist) customMetadata[editingVideoPath].parent = newArtist;
-      else if (customMetadata[editingVideoPath].parent) delete customMetadata[editingVideoPath].parent; // Clear if it was set but is now default
+      else if (customMetadata[editingVideoPath].parent) delete customMetadata[editingVideoPath].parent;
 
-      // Clean up empty objects
       if(Object.keys(customMetadata[editingVideoPath]).length === 0) delete customMetadata[editingVideoPath];
     }
     
     saveState();
     
-    // Update the video list with new display data. Find the index of the video we edited.
     const vIdx = videos.findIndex(v=>v.path===editingVideoPath);
     if(vIdx !== -1) {
-      // Regenerate the display version of this one video
       videos[vIdx] = getDisplayVideo(rawVideo);
     }
     
-    // Re-render the view to show changes
     renderCurrentView();
 
     metaModal.setAttribute('hidden','');
     editingVideoPath=null;
   });
 
-  // Playlist helpers
+  // Playlist helpers (unchanged)
   function generateId(){ return 'pl-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); }
   function getPlaylistById(id){ return playlists.find(p=>p.id===id); }
   function isVideoInAnyPlaylist(path){ return playlists.some(p=>p.videos && p.videos.includes(path)); }
@@ -225,7 +278,7 @@
     saveState();
   }
 
-  // Playlist modal open helpers
+  // Playlist modal open helpers (unchanged)
   let playlistModalMode = null; // 'create' or 'edit'
   let playlistModalEditingId = null;
   function openPlaylistModalForCreate(initialVideo){
@@ -266,7 +319,6 @@
       if(f){
         playlistThumbPreview.src = fileUrl(f);
         playlistThumbPreview.style.display = 'block';
-        // store temporarily in dataset so save can use it
         playlistModal.dataset.selectedThumb = f;
       }
     }catch(e){ console.warn('select playlist thumb failed', e); }
@@ -305,7 +357,7 @@
     }
   });
 
-  // Apply sort
+  // Apply sort (unchanged)
   function applySort(list){
     const s = sortSelect?.value || 'random';
     const pinnedList = list.filter(v=>pinned.has(v.path));
@@ -334,21 +386,25 @@
     }));
   }
 
-  // New function to get display-ready video object
+  // UPDATED: getDisplayVideo now looks up the artist's display name
   function getDisplayVideo(rawVideo){
     const meta = customMetadata[rawVideo.path];
+    const artistProfile = artistProfiles[rawVideo.parent];
+    
+    // Video-specific artist override has priority over artist profile display name
+    const displayParent = meta?.parent || artistProfile?.displayName || rawVideo.parent;
+
     return {
       ...rawVideo,
       title: meta?.title || rawVideo.title,
-      parent: meta?.parent || rawVideo.parent,
-      // Store original parent for sidebar grouping/filtering
-      originalParent: rawVideo.parent, 
+      parent: displayParent, // The name shown on the card
+      originalParent: rawVideo.parent, // The folder/source name
       isCustomTitle: !!meta?.title,
-      isCustomParent: !!meta?.parent,
+      isCustomParent: !!meta?.parent || !!artistProfile?.displayName, // true if video override OR artist profile override is present
     }
   }
 
-  // Restore last folder
+  // Restore last folder (unchanged)
   if(window.electronAPI?.getLastFolder){
     const lastFolder = await window.electronAPI.getLastFolder();
     console.log('[SumoTube] getLastFolder:', lastFolder);
@@ -359,7 +415,6 @@
         if(res && !res.canceled){
           currentFolder=lastFolder;
           if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-          // Patch: Use getDisplayVideo
           videos = normalizeFiles(res.files).map(getDisplayVideo);
           for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail = customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
           currentView={type:'grid'};
@@ -370,7 +425,7 @@
     }
   }
 
-  // Folder open / refresh
+  // Folder open / refresh (unchanged)
   openFolderSmall?.addEventListener('click', async ()=>{
     try{
       let lastFolder = currentFolder;
@@ -379,7 +434,6 @@
       if(res && !res.canceled){
         currentFolder=res.folder;
         if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-        // Patch: Use getDisplayVideo
         videos = normalizeFiles(res.files).map(getDisplayVideo);
         for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail=customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
         currentView={type:'grid'};
@@ -395,7 +449,6 @@
         const res=await window.electronAPI.rescanFolder(currentFolder);
         if(res && !res.canceled){
           if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-          // Patch: Use getDisplayVideo
           videos = normalizeFiles(res.files).map(getDisplayVideo);
           for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail=customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
           if(sortSelect?.value==='random') shuffleArray(videos);
@@ -407,7 +460,6 @@
       if(res && !res.canceled){
         currentFolder=res.folder;
         if(window.electronAPI?.setLastFolder) await window.electronAPI.setLastFolder(currentFolder);
-        // Patch: Use getDisplayVideo
         videos = normalizeFiles(res.files).map(getDisplayVideo);
         for(const v of videos){ if(customThumbs[v.path]) v.customThumbnail=customThumbs[v.path]; if(v.sidecar && !v.customThumbnail) v.sidecarThumbnail=v.sidecar; }
         if(sortSelect?.value==='random') shuffleArray(videos);
@@ -431,7 +483,6 @@
       li.addEventListener('mouseenter', ()=> li.style.background='rgba(255,255,255,0.03)');
       li.addEventListener('mouseleave', ()=> li.style.background='transparent');
 
-      // small right-click menu to delete or edit playlist
       li.addEventListener('contextmenu', (e)=>{
         e.preventDefault();
         const existing=document.querySelector('.context-menu');
@@ -456,19 +507,20 @@
     }
   }
 
+  // UPDATED: buildArtists now uses the artist's display name
   function buildArtists(){
     const map=new Map();
     for(const v of videos){
-      // Patch: Use originalParent for the sidebar grouping
       const artist=v.originalParent||'Unknown';
       if(!map.has(artist)) map.set(artist,[]);
       map.get(artist).push(v);
     }
     artistsEl.innerHTML='';
-    for(const [artist,list] of map.entries()){
+    for(const [originalName,list] of map.entries()){
+      const displayName = artistProfiles[originalName]?.displayName || originalName;
       const li=document.createElement('li');
-      li.textContent=`${artist} (${list.length})`;
-      li.onclick=()=>{ currentView={type:'artist',name:artist}; render(); };
+      li.textContent=`${displayName} (${list.length})`;
+      li.onclick=()=>{ currentView={type:'artist',name:originalName}; render(); }; // Note: we use originalName for navigation
       li.addEventListener('mouseenter', ()=> li.style.background='rgba(255,255,255,0.03)');
       li.addEventListener('mouseleave', ()=> li.style.background='transparent');
       artistsEl.appendChild(li);
@@ -482,53 +534,49 @@
     buildPlaylists();
     visibleCards=[]; selectedIndex=-1;
     const q=(search?.value||'').trim().toLowerCase();
-    // Patch: Search against originalParent as well, for consistency
     let filtered=videos.filter(v=> !q || v.title.toLowerCase().includes(q) || (v.parent||'').toLowerCase().includes(q) || (v.originalParent||'').toLowerCase().includes(q));
     applySort(filtered);
     for(const v of filtered) addVideoCard(v);
   }
 
-  function renderArtist(artist){
-    currentView={type:'artist',name:artist};
+  // UPDATED: renderArtist now uses the artist's display name
+  function renderArtist(originalArtist){
+    currentView={type:'artist',name:originalArtist};
     grid.innerHTML='';
     visibleCards=[]; selectedIndex=-1;
+
+    const profile = artistProfiles[originalArtist];
+    const displayName = profile?.displayName || originalArtist;
 
     const container=document.createElement('div');
     const header=document.createElement('div'); header.className='artist-header';
 
     const pfp=document.createElement('img'); pfp.className='big-pfp';
-    pfp.src=fileUrl(artistProfiles[artist]?.pfp)||PLACEHOLDER_PFP;
+    pfp.src=fileUrl(profile?.pfp)||PLACEHOLDER_PFP;
     header.appendChild(pfp);
 
     const meta=document.createElement('div'); meta.className='artist-meta';
-    const titleEl=document.createElement('h1'); titleEl.textContent=artist; meta.appendChild(titleEl);
-    const bio=document.createElement('p'); bio.textContent=artistProfiles[artist]?.bio||'No bio yet.'; meta.appendChild(bio);
+    const titleEl=document.createElement('h1'); titleEl.textContent=displayName; meta.appendChild(titleEl);
+    const bio=document.createElement('p'); bio.textContent=profile?.bio||'No bio yet.'; meta.appendChild(bio);
 
     const actions=document.createElement('div'); actions.className='artist-actions';
-    const setPfpBtn=document.createElement('button'); setPfpBtn.textContent='Set Picture';
-    setPfpBtn.onclick=async ()=>{
-      const f = await window.electronAPI.selectThumbnail();
-      if(f){ artistProfiles[artist] = artistProfiles[artist]||{}; artistProfiles[artist].pfp=f; pfp.src=fileUrl(f); saveState(); render(); }
-    };
-    actions.appendChild(setPfpBtn);
-
-    const editBioBtn=document.createElement('button'); editBioBtn.textContent='Edit Bio'; editBioBtn.addEventListener('click', ()=> showBioModal(artist));
-    actions.appendChild(editBioBtn);
+    
+    // CONSOLIDATED BUTTON: "Edit Info"
+    const editInfoBtn=document.createElement('button'); editInfoBtn.textContent='Edit Info'; 
+    editInfoBtn.addEventListener('click', ()=> showBioModal(originalArtist));
+    actions.appendChild(editInfoBtn);
 
     const back=document.createElement('button'); back.textContent='← Back'; back.onclick=()=> renderGrid(); actions.appendChild(back);
 
     meta.appendChild(actions); header.appendChild(meta); container.appendChild(header);
 
     const listWrap=document.createElement('div');
-    // PATCH START: Explicitly set grid properties to ensure multi-column layout.
     listWrap.style.display='grid';
     listWrap.style.gridTemplateColumns='repeat(auto-fill,minmax(320px,1fr))';
     listWrap.style.gap='16px';
-    // PATCH END
     listWrap.style.marginTop='18px';
 
-    // Patch: Filter based on originalParent for consistency with buildArtists
-    const filtered=videos.filter(v=>v.originalParent===artist);
+    const filtered=videos.filter(v=>v.originalParent===originalArtist);
     applySort(filtered);
     for(const v of filtered){ const cardEl=createCardElement(v); listWrap.appendChild(cardEl); }
 
@@ -536,6 +584,7 @@
     grid.appendChild(container);
   }
 
+  // renderPlaylist (unchanged)
   function renderPlaylist(playlistId){
     const pl = getPlaylistById(playlistId);
     if(!pl) return renderGrid();
@@ -555,16 +604,10 @@
     const bio=document.createElement('p'); bio.textContent=pl.description||'No description yet.'; meta.appendChild(bio);
 
     const actions=document.createElement('div'); actions.className='artist-actions';
-    const setPfpBtn=document.createElement('button'); setPfpBtn.textContent='Set Picture';
-    setPfpBtn.onclick=async ()=>{
-      const f = await window.electronAPI.selectThumbnail();
-      if(f){ pl.pfp=f; pfp.src=fileUrl(f); saveState(); render(); }
-    };
-    actions.appendChild(setPfpBtn);
-
+    
+    // CONSOLIDATED BUTTON: "Edit Playlist"
     const editDescBtn=document.createElement('button'); editDescBtn.textContent='Edit Playlist';
     editDescBtn.addEventListener('click', ()=>{
-      // open playlist modal in edit mode
       openPlaylistModalForEdit(pl.id);
     });
     actions.appendChild(editDescBtn);
@@ -574,11 +617,9 @@
     meta.appendChild(actions); header.appendChild(meta); container.appendChild(header);
 
     const listWrap=document.createElement('div');
-    // PATCH START: Explicitly set grid properties to ensure multi-column layout.
     listWrap.style.display='grid';
     listWrap.style.gridTemplateColumns='repeat(auto-fill,minmax(320px,1fr))';
     listWrap.style.gap='16px';
-    // PATCH END
     listWrap.style.marginTop='18px';
 
     const filtered = (pl.videos||[]).map(pv=> videos.find(v=>v.path===pv)).filter(Boolean);
@@ -589,6 +630,7 @@
     grid.appendChild(container);
   }
 
+  // UPDATED: createCardElement uses v.parent (the display name) for the card meta
   function createCardElement(v){
     const frag=template.content.cloneNode(true);
     const card=frag.querySelector('.card');
@@ -606,12 +648,12 @@
     card.addEventListener('mouseleave', ()=> card.style.boxShadow='0 6px 18px rgba(2,6,23,0.6)');
 
     title.textContent=v.title;
-    artistName.textContent=v.parent;
-    artistPfp.src=fileUrl(artistProfiles[v.parent]?.pfp)||PLACEHOLDER_PFP;
+    artistName.textContent=v.parent; // This is now the display name
+    // We must use the ORIGINAL folder name to find the profile
+    artistPfp.src=fileUrl(artistProfiles[v.originalParent]?.pfp)||PLACEHOLDER_PFP;
 
     pinIcon.hidden = !pinned.has(v.path);
     
-    // Patch: Add classes to highlight custom metadata
     if(v.isCustomTitle) title.classList.add('custom-meta-override');
     else title.classList.remove('custom-meta-override');
     
@@ -646,7 +688,6 @@
   const existing = document.querySelector('.context-menu');
   if (existing) existing.remove();
 
-  // Create main context menu
   const menu = document.createElement('div');
   menu.className = 'context-menu';
   Object.assign(menu.style, {
@@ -688,8 +729,6 @@
   });
   menu.appendChild(pinOption);
 
-  // REMOVED: "Open with system player" option (removed in previous step)
-
   const thumbOption = makeItem('Set Custom Thumbnail', async ()=>{
     const file = await window.electronAPI.selectThumbnail();
     if(file){ v.customThumbnail = file; customThumbs[v.path] = file; saveState(); renderCurrentView(); }
@@ -706,7 +745,6 @@
   });
   menu.appendChild(removeThumb);
 
-  // NEW: Edit Metadata option
   const editMetaOption = makeItem('Edit Title / Artist', ()=>{
     showMetaModal(v);
     cleanup();

@@ -60,7 +60,15 @@
 
   <div id="bioModal" class="modal" hidden>
     <div class="modal-content">
-      <h3 id="modalArtistName">Artist</h3>
+      <h3 id="modalArtistName">Edit Info for: Artist</h3>
+      
+      <label for="modalDisplayNameInput">Display Name</label>
+      <input id="modalDisplayNameInput" placeholder="Enter artist display name" style="margin-bottom:12px"/>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <button id="modalSelectPfp">Select Picture</button>
+        <img id="modalPfpPreview" alt="Pfp Preview" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#111;" />
+      </div>
+      <label for="modalBioInput">Artist Bio</label>
       <textarea id="modalBioInput" rows="6" placeholder="Enter bio..."></textarea>
       <div class="modal-actions">
         <button id="modalSave">Save</button>
